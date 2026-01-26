@@ -147,7 +147,7 @@
 
         <!-- Post Content -->
         <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg text-base">
-          <AwesomeRender :value="post" />
+          <MDCRenderer v-if="computedBody !== null" :body="computedBody" />
         </div>
 
         <!-- Post Footer with Navigation -->
@@ -172,7 +172,7 @@
               color="neutral"
               icon="lucide:arrow-left"
               size="lg"
-              class="hidden sm:flex"
+              class="hidden sm:flex justify-start"
               :class="{
                 'invisible': !previousPost,
               }"
@@ -189,9 +189,9 @@
               color="neutral"
               trailing-icon="lucide:arrow-right"
               size="sm"
-              class="flex-1 sm:hidden"
+              class="flex-1 sm:hidden justify-end"
               :class="{
-                'invisible': !previousPost,
+                'invisible': !nextPost,
               }"
             >
               next
@@ -220,7 +220,9 @@
 </template>
 
 <script setup lang="ts">
+import type { MDCRoot } from '@nuxtjs/mdc';
 import type { MinimarkTree } from 'minimark';
+import { toHast } from 'minimark/hast';
 
 const route = useRoute();
 const collectionId = route.params.id as string;
@@ -245,6 +247,11 @@ if (!post.value) {
 
 // Fetch all posts in collection for navigation
 const { data: allPosts } = await useFetch<any[]>(`/api/collections/${collectionId}/posts`);
+
+const computedBody = computed(() => {
+  if (!post.value) return null;
+  return toHast(post.value.body) as MDCRoot;
+});
 
 // Sort posts by postId (numeric) - ascending order for chapters
 const sortedPosts = computed(() => {

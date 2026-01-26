@@ -134,9 +134,9 @@ export default defineNuxtConfig({
   mdc: {
     components: {
       prose: true,
-      map: {
-        a: 'ContentProseA',
-      }
+      // map: {
+      //   a: 'A',
+      // }
     },
     headings: {
       anchorLinks: false,

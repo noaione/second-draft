@@ -31,3 +31,5 @@ content/**/*.md
 content/**/*.json
 
 pnpm-lock.yaml
+
+quick-sync.py
