@@ -1,0 +1,13 @@
+{
+  "password": "change-me-in-production",
+  "patreon": {
+    "sessionCookie": "your-patreon-session-cookie",
+    "collections": [
+      {
+        "id": "12345",
+        "name": "Example Collection",
+        "campaignId": "67890"
+      }
+    ]
+  }
+}

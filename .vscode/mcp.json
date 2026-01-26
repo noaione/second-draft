@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"Nuxt Content": {
+			"url": "https://content.nuxt.com/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
