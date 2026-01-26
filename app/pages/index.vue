@@ -84,7 +84,7 @@ const logout = async () => {
         </UCard>
 
         <!-- Collections Grid -->
-        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
           <UCard
             v-for="collection in collections"
             :key="collection.id"

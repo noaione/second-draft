@@ -33,6 +33,7 @@ const handleSubmit = () => {
   }
 };
 </script>
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
     <div class="max-w-md w-full space-y-8">
@@ -57,9 +58,10 @@ const handleSubmit = () => {
         </div>
         <div>
           <button
-                  type="submit"
-                  :disabled="loading || !password"
-                  class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            type="submit"
+            :disabled="loading || !password"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <span v-if="loading">Authenticating...</span>
             <span v-else>Sign in</span>
           </button>

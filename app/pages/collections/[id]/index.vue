@@ -2,6 +2,7 @@
 import { h, resolveComponent } from 'vue'
 import { toRaw } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
+import type { Column } from '@tanstack/vue-table'
 
 const route = useRoute();
 const collectionId = route.params.id as string;
@@ -24,7 +25,10 @@ interface CollectionMetadata {
 }
 
 const NuxtLink = resolveComponent('NuxtLink')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+const UButton = resolveComponent('UButton')
 
+const firstLoad = ref(true);
 const collection = ref<CollectionMetadata | null>(null);
 const posts = ref<PostMetadata[]>([]);
 const sortedPosts = ref<PostMetadata[]>([]);
@@ -40,7 +44,7 @@ onMounted(async () => {
       $fetch<CollectionMetadata>(`/api/collections/${collectionId}`),
       $fetch<PostMetadata[]>(`/api/collections/${collectionId}/posts`),
     ]);
-    
+
     collection.value = collectionData;
     posts.value = postsData;
 
@@ -53,6 +57,8 @@ onMounted(async () => {
     });
   } catch (error) {
     console.error('Error loading collection:', error);
+  } finally {
+    firstLoad.value = false;
   }
 });
 
@@ -65,6 +71,14 @@ const formatDate = (dateString: string) => {
 };
 
 const columns: TableColumn<PostMetadata>[] = [
+  {
+    accessorKey: 'postId',
+    header: ({ column }) => getHeader(column, 'idx'),
+    cell: (data) => {
+      const n = data.row.index + 1;
+      return '#' + n.toString().padStart(3, '0');
+    }
+  },
   {
     accessorKey: 'title',
     header: 'title',
@@ -113,6 +127,62 @@ const columns: TableColumn<PostMetadata>[] = [
     }
   }
 ];
+
+
+function getHeader(column: Column<PostMetadata>, label: string) {
+  const isSorted = column.getIsSorted()
+
+  return h(
+    UDropdownMenu,
+    {
+      content: {
+        align: 'start'
+      },
+      'aria-label': 'Actions dropdown',
+      items: [
+        {
+          label: 'Asc',
+          type: 'checkbox',
+          icon: 'i-lucide-arrow-up-narrow-wide',
+          checked: isSorted === 'asc',
+          onSelect: () => {
+            if (isSorted === 'asc') {
+              column.clearSorting()
+            } else {
+              column.toggleSorting(false)
+            }
+          }
+        },
+        {
+          label: 'Desc',
+          icon: 'i-lucide-arrow-down-wide-narrow',
+          type: 'checkbox',
+          checked: isSorted === 'desc',
+          onSelect: () => {
+            if (isSorted === 'desc') {
+              column.clearSorting()
+            } else {
+              column.toggleSorting(true)
+            }
+          }
+        }
+      ]
+    },
+    () =>
+      h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        label,
+        icon: isSorted
+          ? isSorted === 'asc'
+            ? 'i-lucide-arrow-up-narrow-wide'
+            : 'i-lucide-arrow-down-wide-narrow'
+          : 'i-lucide-arrow-up-down',
+        class: '-mx-2.5 data-[state=open]:bg-elevated',
+        'aria-label': `Sort by ${isSorted === 'asc' ? 'descending' : 'ascending'}`
+      })
+  )
+}
 
 function onSort(column: { key: string; direction?: 'asc' | 'desc' }) {
   if (sortBy.value.column === column.key) {
@@ -186,7 +256,7 @@ watch([posts, search], ([newPosts, searchData]) => {
               icon="lucide:arrow-left"
               size="sm"
             >
-              Home
+              home
             </UButton>
           </div>
         </div>
@@ -213,18 +283,7 @@ watch([posts, search], ([newPosts, searchData]) => {
           </div>
         </div>
 
-        <UCard v-if="sortedPosts.length === 0" class="shadow-lg">
-          <div class="text-center py-12">
-            <UIcon name="lucide:file" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              no chapters found
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              This collection doesn't have any posts yet.
-            </p>
-          </div>
-        </UCard>
-        <UCard v-else class="shadow-lg">
+        <UCard class="shadow-lg">
           <template #header>
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
@@ -244,6 +303,7 @@ watch([posts, search], ([newPosts, searchData]) => {
             :data="sortedPosts"
             :columns="columns"
             :sort="sortBy"
+            :loading="firstLoad"
             @update:sort="onSort"
           />
         </UCard>

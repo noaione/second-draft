@@ -22,7 +22,7 @@
               size="sm"
               class="hidden sm:flex"
             >
-              Home
+              home
             </UButton>
             <UButton
               :to="`/collections/${collectionId}`"
@@ -41,7 +41,7 @@
               size="sm"
               class="hidden sm:flex"
             >
-              Collection
+              collection
             </UButton>
           </div>
 
@@ -67,46 +67,54 @@
 
           <div class="flex items-center gap-1">
             <UButton
-              v-if="previousPost"
-              :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
+              :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
               variant="ghost"
               color="neutral"
               icon="lucide:chevron-left"
               size="sm"
               square
               class="sm:hidden"
+              :class="{
+                'invisible': !previousPost,
+              }"
             />
             <UButton
-              v-if="previousPost"
-              :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
+              :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
               variant="ghost"
               color="neutral"
               icon="lucide:chevron-left"
               size="sm"
               class="hidden sm:flex"
+              :class="{
+                'invisible': !previousPost,
+              }"
             >
-              Previous
+              previous
             </UButton>
             <UButton
-              v-if="nextPost"
-              :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
+              :to="nextPost ? `/collections/${collectionId}/posts/${nextPost.postId}` : '#'"
               variant="ghost"
               color="neutral"
               trailing-icon="lucide:chevron-right"
               size="sm"
               square
               class="sm:hidden"
+              :class="{
+                'invisible': !nextPost,
+              }"
             />
             <UButton
-              v-if="nextPost"
-              :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
+              :to="nextPost ? `/collections/${collectionId}/posts/${nextPost.postId}` : '#'"
               variant="ghost"
               color="neutral"
               trailing-icon="lucide:chevron-right"
               size="sm"
               class="hidden sm:flex"
+              :class="{
+                'invisible': !nextPost,
+              }"
             >
-              Next
+              next
             </UButton>
           </div>
         </div>
@@ -146,55 +154,62 @@
         <template #footer>
           <div class="flex items-center justify-between gap-2 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-800">
             <UButton
-              v-if="previousPost"
-              :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
+              :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
               variant="outline"
               color="neutral"
               icon="lucide:arrow-left"
               size="sm"
               class="flex-1 sm:hidden"
+              :class="{
+                'invisible': !previousPost,
+              }"
             >
-              Prev
+              prev
             </UButton>
             <UButton
-              v-if="previousPost"
-              :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
+              :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
               variant="outline"
               color="neutral"
               icon="lucide:arrow-left"
               size="lg"
               class="hidden sm:flex"
+              :class="{
+                'invisible': !previousPost,
+              }"
             >
               <div class="flex flex-col items-start">
-                <span class="text-xs text-gray-500 dark:text-gray-400">Previous</span>
-                <span class="font-medium truncate max-w-50">{{ previousPost.title }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">previous</span>
+                <span class="font-medium truncate max-w-50">{{ previousPost?.title }}</span>
               </div>
             </UButton>
-            <div v-else class="flex-1" />
 
             <UButton
-              v-if="nextPost"
-              :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
+              :to="nextPost ? `/collections/${collectionId}/posts/${nextPost.postId}` : '#'"
               variant="outline"
               color="neutral"
               trailing-icon="lucide:arrow-right"
               size="sm"
               class="flex-1 sm:hidden"
+              :class="{
+                'invisible': !previousPost,
+              }"
             >
-              Next
+              next
             </UButton>
             <UButton
-              v-if="nextPost"
-              :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
+              :to="nextPost ? `/collections/${collectionId}/posts/${nextPost.postId}` : '#'"
               variant="outline"
               color="neutral"
               trailing-icon="lucide:arrow-right"
               size="lg"
               class="hidden sm:flex"
+              :class="{
+                'invisible': !nextPost,
+              }"
             >
               <div class="flex flex-col items-end">
-                <span class="text-xs text-gray-500 dark:text-gray-400">Next</span>
-                <span class="font-medium truncate max-w-50">{{ nextPost.title }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">next</span>
+                <span class="font-medium truncate max-w-50">{{ nextPost?.title }}</span>
               </div>
             </UButton>
           </div>
