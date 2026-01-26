@@ -30,7 +30,8 @@ export class PatreonClient {
       headers: {
         'Cookie': this.sessionCookie,
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0',
+        'Referer': 'https://www.patreon.com/home',
       },
     });
 
