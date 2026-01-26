@@ -2,7 +2,7 @@
   <NuxtLink
     :href="props.href"
     :target="props.target"
-    class="text-rose-400 hover:text-rose-500 transition-colors hover:underline decoration-dashed"
+    class="text-rose-400! hover:text-rose-500! transition-colors no-underline! hover:underline! decoration-dashed"
   >
     <slot />
   </NuxtLink>

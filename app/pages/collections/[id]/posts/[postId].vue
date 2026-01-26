@@ -138,8 +138,8 @@
         </template>
 
         <!-- Post Content -->
-        <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg">
-          <ContentRenderer :value="post" />
+        <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg text-base">
+          <AwesomeRender :value="post" />
         </div>
 
         <!-- Post Footer with Navigation -->
@@ -205,6 +205,8 @@
 </template>
 
 <script setup lang="ts">
+import type { MinimarkTree } from 'minimark';
+
 const route = useRoute();
 const collectionId = route.params.id as string;
 const postId = route.params.postId as string;
@@ -216,6 +218,7 @@ interface PostMetadata {
   author: string;
   collectionName: string;
   collectionId: string;
+  body: MinimarkTree,
 }
 
 // Fetch current post

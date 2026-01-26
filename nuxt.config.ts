@@ -3,7 +3,7 @@ const rootDir = import.meta.dirname;
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    '@nuxt/content',
+    '@nuxtjs/mdc',
     '@nuxt/fonts',
     '@nuxt/ui',
   ],
@@ -131,13 +131,15 @@ export default defineNuxtConfig({
       sizeLimitKb: 20
     }
   },
-  content: {
-    database: {
-      type: 'sqlite',
-      filename: 'content-database.sqlite',
+  mdc: {
+    components: {
+      prose: true,
+      map: {
+        a: 'ContentProseA',
+      }
     },
-    experimental: {
-      sqliteConnector: 'sqlite3',
+    headings: {
+      anchorLinks: false,
     }
-  }
+  },
 })

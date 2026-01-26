@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@plugin "@tailwindcss/typography";
+// prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg
 
 @theme {
     --font-sans: 'Geist', sans-serif;
