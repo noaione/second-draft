@@ -202,5 +202,8 @@ const formatDate = (dateString: string) => {
 useSeoMeta({
   title: post.value!.title,
   description: `Read "${post.value!.title}" from the "${post.value!.collectionName}" collection.`,
+  ogTitle: post.value!.title,
+  ogDescription: `Read "${post.value!.title}" from the "${post.value!.collectionName}" collection.`,
+  ogType: 'article',
 })
 </script>

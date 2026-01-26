@@ -43,6 +43,14 @@ onMounted(async () => {
     
     collection.value = collectionData;
     posts.value = postsData;
+
+    useSeoMeta({
+      title: collectionData.name,
+      description: `Read posts from the collection "${collectionData.name}" on #seconddraft.`,
+      ogTitle: collectionData.name,
+      ogDescription: `Read posts from the collection "${collectionData.name}" on #seconddraft.`,
+      ogType: 'website',
+    });
   } catch (error) {
     console.error('Error loading collection:', error);
   }
