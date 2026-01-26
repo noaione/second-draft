@@ -1,21 +1,25 @@
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import type { H3Event } from 'h3';
-import { renderMarkdownToHtml, storeRenderedMarkdown } from '~~/server/utils/renderer';
+import { renderMarkdownToHtml } from '~~/server/utils/renderer';
+import { DatabaseThing, getDatabase, getStoredPosts, storeRenderedMarkdown, prepareDatabase } from '~~/server/utils/db';
 
-async function getFromCollectionPost(event: H3Event, collectionId: string, postId: string) {
-  // Query all posts in this collection using path pattern
-  const singlePost = await queryCollection(event, 'content')
-    .where('collectionId', '=', collectionId)
-    .where('postId', '=', postId)
-    .first();
-
-  return singlePost;
+async function getFromCollectionStored(
+  db: DatabaseThing,
+  collectionId: string,
+  postId: string
+) {
+  const result = await getStoredPosts(db, collectionId, postId);
+  return result;
 }
 
-async function getFromCollectionPath(event: H3Event, collectionId: string, postId: string) {
+async function getFromCollectionPath(
+  event: H3Event,
+  db: DatabaseThing,
+  collectionId: string,
+  postId: string
+) {
   const runtimeConfig = useRuntimeConfig(event);
-
   const postPath = join(
     runtimeConfig.rootDir,
     'content',
@@ -23,22 +27,16 @@ async function getFromCollectionPath(event: H3Event, collectionId: string, postI
     'posts',
     `${postId}.md`
   );
-  console.log(`Reading post file from path: ${postPath}`);
-  const dbPath = join(runtimeConfig.rootDir, '.data', 'content', 'contents.sqlite');
   
   try {
-    console.log(`Attempting to read markdown file at ${postPath}`);
     const markdownContent = await fs.readFile(postPath, 'utf-8');
 
     // Render with nuxt/content
-    console.log(`Rendering markdown content for postId ${postId} in collection ${collectionId}`);
     const results = await renderMarkdownToHtml(markdownContent);
-    console.log(`Storing rendered markdown content for postId ${postId} in collection ${collectionId} to database`);
-    await storeRenderedMarkdown(results, `${collectionId}/posts/${postId}.md`, dbPath);
-    console.log(`Successfully processed postId ${postId} in collection ${collectionId}`);
+    await storeRenderedMarkdown(db, results, `${collectionId}/posts/${postId}.md`);
     return results;
   } catch (error: any) {
-    console.error(`Error reading post file at ${postPath}:`, error);
+    console.error(`Error rendering post file at ${postPath}:`, error);
     if (error?.code === 'ENOENT') {
       return null;
     }
@@ -48,6 +46,9 @@ async function getFromCollectionPath(event: H3Event, collectionId: string, postI
 export default defineEventHandler(async (event) => {
   const collectionId = getRouterParam(event, 'id');
   const postId = getRouterParam(event, 'postId');
+  const runtimeConfig = useRuntimeConfig(event);
+
+  const dbPath = join(runtimeConfig.rootDir, '.output', 'server', 'dynamic-content.sqlite');
 
   if (!collectionId) {
     throw createError({
@@ -62,17 +63,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const db = getDatabase(dbPath);
+  await prepareDatabase(db);
+
   try {
-    const post = await getFromCollectionPost(event, collectionId, postId);
-    console.log('Post from collection query:', post);
-    if (post !== null) {
+    const singlePostStored = await getFromCollectionStored(db, collectionId, postId);
+
+    if (singlePostStored) {
       return {
-        ...post,
-      }
+        ...singlePostStored,
+      };
     }
 
-    const singlePost = await getFromCollectionPath(event, collectionId, postId);
-    console.log('Post from file path query:', singlePost);
+    const singlePost = await getFromCollectionPath(event, db, collectionId, postId);
 
     if (!singlePost) {
       throw createError({
@@ -85,6 +88,7 @@ export default defineEventHandler(async (event) => {
       ...singlePost,
     };
   } catch (error: any) {
+    console.error('Error fetching post:', error);
     // Return empty array if no posts found
     return [];
   }

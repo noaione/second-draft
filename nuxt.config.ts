@@ -132,6 +132,10 @@ export default defineNuxtConfig({
     }
   },
   content: {
+    database: {
+      type: 'sqlite',
+      filename: 'content-database.sqlite',
+    },
     experimental: {
       sqliteConnector: 'sqlite3',
     }

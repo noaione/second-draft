@@ -14,10 +14,9 @@ import ts from '@shikijs/langs/ts';
 import typescript from '@shikijs/langs/typescript';
 import { createOnigurumaEngine, Highlighter } from "shiki";
 
-import { visit } from 'unist-util-visit';
 import { fromHast } from "minimark/hast";
 import { PostMetadata } from "~~/types/patreon";
-import { MinimarkTree } from "minimark";
+import { RenderedMarkdownResult } from "./db";
 
 type HighlightedNode = { type: 'element', properties?: Record<string, string | undefined> }
 
@@ -66,9 +65,7 @@ async function getHighlighter() {
   return highlightPlugin;  
 }
 
-type RenderedMarkdownResult = PostMetadata & { body: MinimarkTree, description: string };
-
-export async function renderMarkdownToHtml(markdown: string): Promise<RenderedMarkdownResult> {
+export async function renderMarkdownToHtml(markdown: string): Promise<Omit<RenderedMarkdownResult, 'id'>> {
   const highlighterPlugin = highlightPlugin || await getHighlighter();
 
   const parsed = await parseMarkdown(markdown, {
@@ -89,47 +86,9 @@ export async function renderMarkdownToHtml(markdown: string): Promise<RenderedMa
 
   const comprssedBody = fromHast(parsed.body);
   const dataContent = parsed.data as PostMetadata & { description: string };
-  console.log(`Rendered markdown for postId ${dataContent.postId} titled "${dataContent.title}"`);
 
   return {
     ...dataContent,
     body: comprssedBody,
   }
-}
-
-export async function storeRenderedMarkdown(result: RenderedMarkdownResult, path: string, dbPath: string) {
-  // Initiate database with SQLite connector
-  const db = createDatabase(sqlite({
-    path: dbPath,
-  }));
-
-  const stmt = db.prepare(`
-    INSERT INTO _content_content (id, title, author, body, postId, collectionId, collectionName, description, extension, meta, navigation, path, publishedAt, seo, stem, __hash__)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const values: Primitive[] = [
-    `content/${path}`,
-    result.title,
-    result.author,
-    JSON.stringify(result.body),
-    result.postId,
-    result.collectionId,
-    result.collectionName,
-    result.description,
-    'md',
-    '{}',
-    true,
-    `/${path.replace('.md', '')}`,
-    result.publishedAt,
-    JSON.stringify({title: result.title, description: result.description}),
-    path.replace('.md', ''),
-  ];
-
-  const hashValue = hash(values);
-  values.push(hashValue);
-
-  console.log(`Storing rendered markdown for ${path} with hash ${hashValue}`);
-  const stmtResult = await stmt.run(...values);
-  console.log(`Stored rendered markdown for ${path} with rowid ${stmtResult}`);
 }
