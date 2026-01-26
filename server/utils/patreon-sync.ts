@@ -229,6 +229,10 @@ export async function syncPatreon(rootDir: string) {
     // Sync each collection
     let totalDownloaded = 0;
     for (const collection of collectionsToSync) {
+      if (collection.complete) {
+        console.log(`   Skipping completed collection: ${collection.name} (${collection.id})`);
+        continue;
+      }
       await syncCollection(
         client,
         collection.id,

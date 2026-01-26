@@ -6,6 +6,7 @@ export interface PatreonCollection {
   id: string;
   name: string;
   campaignId: string;
+  complete?: boolean;
 }
 
 export interface PatreonConfig {
