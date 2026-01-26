@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import TurndownService from 'turndown';
-import type { AppConfig, CollectionMetadata, PostMetadata } from '../../types/patreon';
+import type { AppConfig, CollectionMetadata, PatreonPostsListResponse, PostMetadata } from '../../types/patreon';
 import { PatreonClient } from './patreon-client';
 
 const turndownService = new TurndownService({
@@ -108,6 +108,21 @@ async function savePost(
   await fs.writeFile(postPath, markdown, 'utf-8');
 }
 
+function patreonToMeta(post: PatreonPostsListResponse['data'][0], collectionId: string, collectionName: string, author: string): PostMetadata {
+  const postId = post.id;
+  const title = post.attributes.title || 'Untitled Post';
+  const publishedAt = post.attributes.published_at;
+
+  return {
+    title,
+    postId,
+    publishedAt,
+    author,
+    collectionName,
+    collectionId,
+  };
+}
+
 /**
  * Sync a single collection
  */
@@ -148,7 +163,6 @@ async function syncCollection(
       const postId = post.id;
       const title = post.attributes.title || 'Untitled Post';
       const htmlContent = post.attributes.content || '';
-      const publishedAt = post.attributes.published_at;
 
       console.log(`   📥 Downloading: ${title} (${postId})`);
 
@@ -156,14 +170,7 @@ async function syncCollection(
       const markdownContent = htmlToMarkdown(htmlContent);
 
       // Create post metadata
-      const metadata: PostMetadata = {
-        title,
-        postId,
-        publishedAt,
-        author: creatorName,
-        collectionName,
-        collectionId,
-      };
+      const metadata = patreonToMeta(post, collectionId, collectionName, creatorName);
 
       // Save post
       await savePost(collectionId, postId, metadata, markdownContent);
@@ -184,7 +191,7 @@ async function syncCollection(
     campaignId,
     lastSync: new Date().toISOString(),
     postCount: totalPosts,
-    posts: collectedMeta,
+    posts: posts.map(post => patreonToMeta(post, collectionId, collectionName, creatorName)),
   };
 
   await saveCollectionMetadata(collectionId, metadata);
