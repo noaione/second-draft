@@ -25,8 +25,9 @@ const SESSION_OPTIONS = {
 /**
  * Load configuration
  */
-async function loadConfig(): Promise<AppConfig> {
-  const configPath = join(process.cwd(), 'config.json');
+async function loadConfig(event: H3Event): Promise<AppConfig> {
+  const runtimeConfig = useRuntimeConfig(event);
+  const configPath = join(runtimeConfig.rootDir, 'config.json');
   const configData = await fs.readFile(configPath, 'utf-8');
   return JSON.parse(configData);
 }
@@ -34,7 +35,7 @@ async function loadConfig(): Promise<AppConfig> {
 /**
  * Get iron session from H3 event
  */
-export async function getSession(event: H3Event): Promise<IronSession<SessionData>> {
+export async function getSDraftSession(event: H3Event): Promise<IronSession<SessionData>> {
   const req = toWebRequest(event);
   const res = event.node.res;
   return getIronSession<SessionData>(req, res, SESSION_OPTIONS);
@@ -43,8 +44,8 @@ export async function getSession(event: H3Event): Promise<IronSession<SessionDat
 /**
  * Verify password against configured password
  */
-export async function verifyPassword(password: string): Promise<boolean> {
-  const config = await loadConfig();
+export async function verifyPassword(event: H3Event, password: string): Promise<boolean> {
+  const config = await loadConfig(event);
 
   // Check if password is hashed (starts with $2a$, $2b$, or $2y$)
   if (config.password.startsWith('$2')) {
@@ -60,7 +61,7 @@ export async function verifyPassword(password: string): Promise<boolean> {
  */
 export async function isAuthenticated(event: H3Event): Promise<boolean> {
   try {
-    const session = await getSession(event);
+    const session = await getSDraftSession(event);
     return session.authenticated === true;
   } catch (error) {
     return false;
@@ -71,7 +72,7 @@ export async function isAuthenticated(event: H3Event): Promise<boolean> {
  * Set authentication session
  */
 export async function setAuthSession(event: H3Event): Promise<void> {
-  const session = await getSession(event);
+  const session = await getSDraftSession(event);
   session.authenticated = true;
   session.createdAt = Date.now();
   await session.save();
@@ -81,6 +82,6 @@ export async function setAuthSession(event: H3Event): Promise<void> {
  * Clear authentication session
  */
 export async function clearAuthSession(event: H3Event): Promise<void> {
-  const session = await getSession(event);
+  const session = await getSDraftSession(event);
   session.destroy();
 }

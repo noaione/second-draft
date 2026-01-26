@@ -27,6 +27,7 @@ export interface CollectionMetadata {
   campaignId: string;
   lastSync: string; // ISO 8601 date string
   postCount: number;
+  posts?: PostMetadata[];
 }
 
 /**

@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import type { CollectionMetadata } from '../../../types/patreon';
 
 export default defineEventHandler(async (event) => {
-  const contentDir = join(process.cwd(), 'content');
+  const runtimeConfig = useRuntimeConfig(event);
+  const contentDir = join(runtimeConfig.rootDir, 'content');
   const collections: CollectionMetadata[] = [];
 
   try {

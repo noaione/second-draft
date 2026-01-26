@@ -19,6 +19,9 @@ export default defineEventHandler(async (event) => {
   if (path.startsWith('/_nuxt/') || publicPaths.includes(path)) {
     return;
   }
+  if (path.startsWith('/assets/') || path.startsWith('/_fonts/') || path.startsWith('/favicon') || path.startsWith('/site.webmanifest') || path.startsWith('/robots.txt') || path.startsWith('/__nuxt_content/')) {
+    return;
+  }
 
   if (path.startsWith('/api/')) {
     // For API routes, return 401 if not authenticated

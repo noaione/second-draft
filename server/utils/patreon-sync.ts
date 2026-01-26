@@ -23,25 +23,10 @@ async function ensureDir(dirPath: string) {
 /**
  * Load configuration from config.json
  */
-async function loadConfig(): Promise<AppConfig> {
-  const configPath = join(process.cwd(), 'config.json');
+async function loadConfig(rootDir: string): Promise<AppConfig> {
+  const configPath = join(rootDir, 'config.json');
   const configData = await fs.readFile(configPath, 'utf-8');
   return JSON.parse(configData);
-}
-
-/**
- * Load existing collection metadata
- */
-async function loadCollectionMetadata(collectionId: string): Promise<CollectionMetadata | null> {
-  const metadataPath = join(process.cwd(), 'content', collectionId, 'index.json');
-
-  try {
-    const data = await fs.readFile(metadataPath, 'utf-8');
-    return JSON.parse(data);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') return null;
-    throw error;
-  }
 }
 
 /**
@@ -157,6 +142,7 @@ async function syncCollection(
 
   // Download missing posts
   let downloadedCount = 0;
+  const collectedMeta = [];
   for (const post of missingPosts) {
     try {
       const postId = post.id;
@@ -182,6 +168,7 @@ async function syncCollection(
       // Save post
       await savePost(collectionId, postId, metadata, markdownContent);
       downloadedCount++;
+      collectedMeta.push(metadata);
 
       console.log(`   ✅ Saved: ${title}`);
     } catch (error) {
@@ -197,6 +184,7 @@ async function syncCollection(
     campaignId,
     lastSync: new Date().toISOString(),
     postCount: totalPosts,
+    posts: collectedMeta,
   };
 
   await saveCollectionMetadata(collectionId, metadata);
@@ -205,12 +193,12 @@ async function syncCollection(
   console.log(`   📊 Total posts in collection: ${totalPosts}`);
 }
 
-export async function syncPatreon() {
+export async function syncPatreon(rootDir: string) {
   console.log('🚀 Starting Patreon sync task...');
 
   try {
     // Load configuration
-    const config = await loadConfig();
+    const config = await loadConfig(rootDir);
 
     if (!config.patreon.sessionCookie) {
       throw new Error('Patreon session cookie not configured in config.json');

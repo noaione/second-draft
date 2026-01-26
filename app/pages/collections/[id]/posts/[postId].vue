@@ -2,15 +2,25 @@
   <div class="min-h-screen bg-white dark:bg-black">
     <!-- Top Navigation -->
     <header class="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
-          <div class="flex items-center gap-4">
+      <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-1 sm:gap-2">
+          <div class="flex items-center gap-1">
             <UButton
               to="/"
               variant="ghost"
               color="neutral"
-              icon="i-heroicons-arrow-left"
+              icon="lucide:house"
               size="sm"
+              square
+              class="sm:hidden"
+            />
+            <UButton
+              to="/"
+              variant="ghost"
+              color="neutral"
+              icon="lucide:house"
+              size="sm"
+              class="hidden sm:flex"
             >
               Home
             </UButton>
@@ -18,15 +28,25 @@
               :to="`/collections/${collectionId}`"
               variant="ghost"
               color="neutral"
-              icon="i-heroicons-arrow-left"
+              icon="lucide:arrow-left"
               size="sm"
+              square
+              class="sm:hidden"
+            />
+            <UButton
+              :to="`/collections/${collectionId}`"
+              variant="ghost"
+              color="neutral"
+              icon="lucide:arrow-left"
+              size="sm"
+              class="hidden sm:flex"
             >
               Collection
             </UButton>
           </div>
 
           <!-- Chapter Selector -->
-          <div class="flex-1 w-full mx-4">
+          <div class="flex-1 min-w-0 mx-1 sm:mx-4">
             <USelect
               v-model="postId"
               :items="sortedPosts.map(p => ({ label: p.title, value: p.postId }))"
@@ -38,21 +58,32 @@
               }"
             >
               <template #leading>
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  Chapter {{ currentIndex + 1 }}/{{ sortedPosts.length }}
+                <span class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+                  Ch {{ currentIndex + 1 }}/{{ sortedPosts.length }}
                 </span>
               </template>
             </USelect>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
             <UButton
               v-if="previousPost"
               :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
               variant="ghost"
               color="neutral"
-              icon="i-heroicons-chevron-left"
+              icon="lucide:chevron-left"
               size="sm"
+              square
+              class="sm:hidden"
+            />
+            <UButton
+              v-if="previousPost"
+              :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
+              variant="ghost"
+              color="neutral"
+              icon="lucide:chevron-left"
+              size="sm"
+              class="hidden sm:flex"
             >
               Previous
             </UButton>
@@ -61,8 +92,19 @@
               :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
               variant="ghost"
               color="neutral"
-              trailing-icon="i-heroicons-chevron-right"
+              trailing-icon="lucide:chevron-right"
               size="sm"
+              square
+              class="sm:hidden"
+            />
+            <UButton
+              v-if="nextPost"
+              :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
+              variant="ghost"
+              color="neutral"
+              trailing-icon="lucide:chevron-right"
+              size="sm"
+              class="hidden sm:flex"
             >
               Next
             </UButton>
@@ -89,7 +131,7 @@
               {{ post.title }}
             </h1>
             <div v-if="(post as any).author" class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <UIcon name="i-heroicons-user-circle" class="w-5 h-5" />
+              <UIcon name="lucide:circle-user-round" class="w-5 h-5" />
               <span>{{ (post as any).author }}</span>
             </div>
           </div>
@@ -102,29 +144,53 @@
 
         <!-- Post Footer with Navigation -->
         <template #footer>
-          <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex items-center justify-between gap-2 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-800">
             <UButton
               v-if="previousPost"
               :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
               variant="outline"
               color="neutral"
-              icon="i-heroicons-arrow-left"
+              icon="lucide:arrow-left"
+              size="sm"
+              class="flex-1 sm:hidden"
+            >
+              Prev
+            </UButton>
+            <UButton
+              v-if="previousPost"
+              :to="`/collections/${collectionId}/posts/${previousPost.postId}`"
+              variant="outline"
+              color="neutral"
+              icon="lucide:arrow-left"
               size="lg"
+              class="hidden sm:flex"
             >
               <div class="flex flex-col items-start">
                 <span class="text-xs text-gray-500 dark:text-gray-400">Previous</span>
                 <span class="font-medium truncate max-w-50">{{ previousPost.title }}</span>
               </div>
             </UButton>
-            <div v-else />
+            <div v-else class="flex-1" />
 
             <UButton
               v-if="nextPost"
               :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
               variant="outline"
               color="neutral"
-              trailing-icon="i-heroicons-arrow-right"
+              trailing-icon="lucide:arrow-right"
+              size="sm"
+              class="flex-1 sm:hidden"
+            >
+              Next
+            </UButton>
+            <UButton
+              v-if="nextPost"
+              :to="`/collections/${collectionId}/posts/${nextPost.postId}`"
+              variant="outline"
+              color="neutral"
+              trailing-icon="lucide:arrow-right"
               size="lg"
+              class="hidden sm:flex"
             >
               <div class="flex flex-col items-end">
                 <span class="text-xs text-gray-500 dark:text-gray-400">Next</span>
@@ -172,7 +238,6 @@ const sortedPosts = computed(() => {
 
 // Find current post index
 const currentIndex = computed(() => {
-  console.log(sortedPosts.value);
   return sortedPosts.value.findIndex(p => p.postId === postId);
 });
 

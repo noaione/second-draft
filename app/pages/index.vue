@@ -48,7 +48,7 @@ const logout = async () => {
           <UButton
             variant="ghost"
             color="neutral"
-            icon="i-heroicons-arrow-right-on-rectangle"
+            icon="lucide:log-out"
             @click="logout"
           >
             exit
@@ -73,7 +73,7 @@ const logout = async () => {
         <!-- Empty State -->
         <UCard v-if="!firstLoad && collections.length === 0" class="shadow-lg">
           <div class="text-center py-12">
-            <UIcon name="i-heroicons-folder-open" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+            <UIcon name="lucide:folder-open" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               no collections found
             </h3>
@@ -98,17 +98,17 @@ const logout = async () => {
                     {{ collection.name }}
                   </h3>
                 </div>
-                <UIcon name="i-heroicons-chevron-right" class="w-5 h-5 text-gray-400" />
+                <UIcon name="lucide:chevron-right" class="w-5 h-5 text-gray-400" />
               </div>
             </template>
 
             <div class="space-y-3">
               <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <UIcon name="i-heroicons-document-text" />
+                <UIcon name="lucide:file" />
                 <span>{{ collection.postCount }} chapters</span>
               </div>
               <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <UIcon name="i-heroicons-clock" />
+                <UIcon name="lucide:clock" />
                 <span>last synced {{ formatDate(collection.lastSync) }}</span>
               </div>
             </div>
@@ -119,7 +119,7 @@ const logout = async () => {
                 block
                 color="neutral"
                 variant="ghost"
-                trailing-icon="i-heroicons-arrow-right"
+                trailing-icon="lucide:arrow-right"
               >
                 view collection
               </UButton>

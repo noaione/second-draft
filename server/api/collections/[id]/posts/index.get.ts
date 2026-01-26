@@ -1,5 +1,10 @@
+import { promises as fs } from 'node:fs';
+import { join } from 'node:path';
+import type { CollectionMetadata } from '../../../../../types/patreon';
+
 export default defineEventHandler(async (event) => {
   const collectionId = getRouterParam(event, 'id');
+  const runtimeConfig = useRuntimeConfig(event);
 
   if (!collectionId) {
     throw createError({
@@ -8,20 +13,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  try {
-    // Query all posts in this collection using path pattern
-    const posts = await queryCollection(event, 'content')
-      .where('path', 'LIKE', `/${collectionId}/posts/%`)
-      .select('path', 'title', 'postId' as any, 'publishedAt' as any, 'author' as any, 'collectionName' as any, 'collectionId' as any)
-      .order('publishedAt' as any, 'DESC')
-      .all();
+  const indexPath = join(runtimeConfig.rootDir, 'content', collectionId, 'index.json');
 
-    return posts.map((post) => ({
-      id: post.postId,
-      ...post,
-    }))
+  try {
+    const data = await fs.readFile(indexPath, 'utf-8');
+    const metadata = JSON.parse(data) as CollectionMetadata;
+    return metadata.posts!;
   } catch (error: any) {
-    // Return empty array if no posts found
-    return [];
+    if (error.code === 'ENOENT') {
+      throw createError({
+        statusCode: 404,
+        message: 'Collection not found',
+      });
+    }
+    throw error;
   }
 });

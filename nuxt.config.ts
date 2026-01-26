@@ -1,3 +1,5 @@
+const rootDir = import.meta.dirname;
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -8,7 +10,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/styles.css'],
   devtools: { enabled: true },
   compatibilityDate: '2026-01-26',
-app: {
+  app: {
     head: {
       htmlAttrs: {
         lang: 'en',
@@ -98,10 +100,13 @@ app: {
       ],
     }
   },
+  runtimeConfig: {
+    rootDir,
+  },
   nitro: {
     preset: 'bun',
     experimental: {
-      tasks: true
+      tasks: true,
     },
     scheduledTasks: {
       '0 0 * * *': ['patreon:sync']
@@ -124,6 +129,11 @@ app: {
         globExclude: ['node_modules', 'dist', /* ... */],
       },
       sizeLimitKb: 20
+    }
+  },
+  content: {
+    experimental: {
+      sqliteConnector: 'sqlite3',
     }
   }
 })

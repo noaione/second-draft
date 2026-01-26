@@ -168,7 +168,6 @@ watch([posts, search], ([newPosts, searchData]) => {
       return aVal < bVal ? 1 : -1;
     }
   });
-  console.log('Sorted Data:', sortedData);
   sortedPosts.value = sortedData;
 })
 </script>
@@ -184,7 +183,7 @@ watch([posts, search], ([newPosts, searchData]) => {
               to="/"
               variant="ghost"
               color="neutral"
-              icon="i-heroicons-arrow-left"
+              icon="lucide:arrow-left"
               size="sm"
             >
               Home
@@ -204,11 +203,11 @@ watch([posts, search], ([newPosts, searchData]) => {
           </h1>
           <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
             <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-document-text" />
+              <UIcon name="lucide:file" />
               <span>{{ collection.postCount }} chapters</span>
             </div>
             <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-arrow-path" />
+              <UIcon name="lucide:refresh-ccw" />
               <span>last synced {{ formatDate(collection.lastSync) }}</span>
             </div>
           </div>
@@ -216,7 +215,7 @@ watch([posts, search], ([newPosts, searchData]) => {
 
         <UCard v-if="sortedPosts.length === 0" class="shadow-lg">
           <div class="text-center py-12">
-            <UIcon name="i-heroicons-document-text" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+            <UIcon name="lucide:file" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               no chapters found
             </h3>
@@ -234,7 +233,7 @@ watch([posts, search], ([newPosts, searchData]) => {
               <UInput
                 v-model="search"
                 placeholder="search chapters..."
-                icon="i-heroicons-magnifying-glass"
+                icon="lucide:search"
                 size="sm"
                 class="w-64"
               />

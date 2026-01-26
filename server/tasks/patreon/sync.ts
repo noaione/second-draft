@@ -9,6 +9,7 @@ export default defineTask({
     description: 'Download Patreon posts and convert to markdown',
   },
   async run({ payload, context }) {
-    return await syncPatreon();
+    const rootDir = useRuntimeConfig().rootDir;
+    return await syncPatreon(rootDir);
   },
 });
