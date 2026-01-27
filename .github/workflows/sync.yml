@@ -24,7 +24,7 @@ jobs:
 
       - name: Clone target repo
         run: |
-          git clone "${{ secrets.PATREON_TARGET_REPO }}" content
+          git clone "https://x-access-token:${{ secrets.PATREON_TARGET_TOKEN }}@github.com/${{ secrets.PATREON_TARGET_REPO }}.git" content
 
       - name: Write config.json
         run: |
