@@ -108,9 +108,9 @@ export default defineNuxtConfig({
     experimental: {
       tasks: true,
     },
-    scheduledTasks: {
-      '0 0 * * *': ['patreon:sync']
-    },
+    // scheduledTasks: {
+    //   '0 0 * * *': ['patreon:sync']
+    // },
   },
   fonts: {
     defaults: {
