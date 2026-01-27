@@ -12,6 +12,9 @@ export default defineEventHandler(async (event) => {
 
     for (const entry of entries) {
       if (entry.isDirectory()) {
+        if (entry.name.startsWith('.')) {
+          continue;
+        }
         const indexPath = join(contentDir, entry.name, 'index.json');
 
         try {
