@@ -7,6 +7,7 @@
           <div class="flex items-center gap-1">
             <UButton
               to="/"
+              prefetch
               variant="ghost"
               color="neutral"
               icon="lucide:house"
@@ -16,6 +17,7 @@
             />
             <UButton
               to="/"
+              prefetch
               variant="ghost"
               color="neutral"
               icon="lucide:house"
@@ -26,6 +28,7 @@
             </UButton>
             <UButton
               :to="`/collections/${collectionId}`"
+              prefetch
               variant="ghost"
               color="neutral"
               icon="lucide:arrow-left"
@@ -35,6 +38,7 @@
             />
             <UButton
               :to="`/collections/${collectionId}`"
+              prefetch
               variant="ghost"
               color="neutral"
               icon="lucide:arrow-left"
@@ -68,6 +72,7 @@
           <div class="flex items-center gap-1">
             <UButton
               :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
+              prefetch
               variant="ghost"
               color="neutral"
               icon="lucide:chevron-left"
@@ -80,6 +85,7 @@
             />
             <UButton
               :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
+              prefetch
               variant="ghost"
               color="neutral"
               icon="lucide:chevron-left"
@@ -93,6 +99,7 @@
             </UButton>
             <UButton
               :to="nextPost ? `/collections/${collectionId}/posts/${nextPost.postId}` : '#'"
+              prefetch
               variant="ghost"
               color="neutral"
               trailing-icon="lucide:chevron-right"
@@ -105,6 +112,7 @@
             />
             <UButton
               :to="nextPost ? `/collections/${collectionId}/posts/${nextPost.postId}` : '#'"
+              prefetch
               variant="ghost"
               color="neutral"
               trailing-icon="lucide:chevron-right"
