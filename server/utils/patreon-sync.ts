@@ -144,8 +144,8 @@ async function syncCollection(
 
   // Get all posts for this campaign
   console.log('   Fetching posts from Patreon...');
-  const posts = await client.getCampaignPosts(collectionId, campaignId);
-  console.log(`   Found ${posts.length} posts on Patreon`);
+  const posts = (await client.getCampaignPosts(collectionId, campaignId)).filter(post => post.attributes.current_user_can_view);
+  console.log(`   Found ${posts.length} accessible posts on Patreon`);
 
   // Get already downloaded posts
   const downloadedPosts = await getDownloadedPosts(collectionId);

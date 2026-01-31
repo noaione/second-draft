@@ -64,6 +64,7 @@ export interface PatreonPostAttributes {
   published_at: string;
   url: string;
   post_type: string;
+  current_user_can_view: boolean;
 }
 
 export interface PatreonPostRelationships {
