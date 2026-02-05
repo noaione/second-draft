@@ -75,7 +75,7 @@ export class PatreonClient {
         'filter[collection_id]': collectionId,
         'filter[campaign_id]': campaignId,
         'include': 'user,campaign',
-        'fields[post]': 'title,content,published_at,url,post_type',
+        'fields[post]': 'title,content,published_at,url,post_type,current_user_can_view',
         'fields[user]': 'full_name,url',
         'page[count]': '100', // Max allowed
       };
