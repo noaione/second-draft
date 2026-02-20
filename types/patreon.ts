@@ -61,6 +61,8 @@ export interface PatreonUser {
 export interface PatreonPostAttributes {
   title: string;
   content: string;
+  /** Structured rich-text JSON (preferred over `content` HTML) */
+  content_json_string?: string | null;
   published_at: string;
   url: string;
   post_type: string;

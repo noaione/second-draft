@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import TurndownService from 'turndown';
 import type { AppConfig, CollectionMetadata, PatreonPostsListResponse, PostMetadata } from '../../types/patreon';
 import { PatreonClient } from './patreon-client';
+import { patreonJsonToMarkdown } from './patreon-json-parser';
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -162,12 +163,14 @@ async function syncCollection(
     try {
       const postId = post.id;
       const title = post.attributes.title || 'Untitled Post';
-      const htmlContent = post.attributes.content || '';
 
       console.log(`   📥 Downloading: ${title} (${postId})`);
 
-      // Convert HTML to Markdown
-      const markdownContent = htmlToMarkdown(htmlContent);
+      // Prefer structured JSON over HTML when available
+      const jsonString = post.attributes.content_json_string;
+      const markdownContent =
+        patreonJsonToMarkdown(jsonString) ??
+        htmlToMarkdown(post.attributes.content || '');
 
       // Create post metadata
       const metadata = patreonToMeta(post, collectionId, collectionName, creatorName);
@@ -230,7 +233,7 @@ export async function syncPatreon(rootDir: string) {
     let totalDownloaded = 0;
     for (const collection of collectionsToSync) {
       if (collection.complete) {
-        console.log(`   Skipping completed collection: ${collection.name} (${collection.id})`);
+        console.log(`   ⚠️ Skipping completed collection: ${collection.name} (${collection.id})`);
         continue;
       }
       await syncCollection(
