@@ -63,22 +63,31 @@ export class PatreonClient {
   }
 
   /**
-   * Get all posts for a campaign with pagination support
+   * Get all posts for a campaign with pagination support.
+   * Pass `{ collectionId }` to filter by collection ID, or `{ tag }` to filter by tag.
    */
-  async getCampaignPosts(collectionId: string, campaignId: string): Promise<PatreonPostsListResponse['data']> {
+  async getCampaignPosts(
+    campaignId: string,
+    filter: { collectionId: string } | { tag: string },
+  ): Promise<PatreonPostsListResponse['data']> {
     let allPosts: PatreonPostsListResponse['data'] = [];
     let cursor: string | undefined;
 
     do {
       console.log(`   Fetching posts page with cursor: ${cursor || 'start'}`);
       const params: Record<string, string> = {
-        'filter[collection_id]': collectionId,
         'filter[campaign_id]': campaignId,
         'include': 'user,campaign',
         'fields[post]': 'title,content,published_at,url,post_type,content_json_string,current_user_can_view',
         'fields[user]': 'full_name,url',
         'page[count]': '100', // Max allowed
       };
+
+      if ('tag' in filter) {
+        params['filter[tag]'] = filter.tag;
+      } else {
+        params['filter[collection_id]'] = filter.collectionId;
+      }
 
       if (cursor) {
         params['page[cursor]'] = cursor;

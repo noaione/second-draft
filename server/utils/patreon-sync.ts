@@ -131,7 +131,8 @@ async function syncCollection(
   client: PatreonClient,
   collectionId: string,
   collectionName: string,
-  campaignId: string
+  campaignId: string,
+  filter: { collectionId: string } | { tag: string },
 ): Promise<void> {
   console.log(`\n🔄 Syncing collection: ${collectionName} (${collectionId})`);
 
@@ -145,7 +146,7 @@ async function syncCollection(
 
   // Get all posts for this campaign
   console.log('   Fetching posts from Patreon...');
-  const posts = (await client.getCampaignPosts(collectionId, campaignId)).filter(post => post.attributes.current_user_can_view);
+  const posts = (await client.getCampaignPosts(campaignId, filter)).filter(post => post.attributes.current_user_can_view);
   console.log(`   Found ${posts.length} accessible posts on Patreon`);
 
   // Get already downloaded posts
@@ -230,17 +231,19 @@ export async function syncPatreon(rootDir: string) {
     }
 
     // Sync each collection
-    let totalDownloaded = 0;
     for (const collection of collectionsToSync) {
       if (collection.complete) {
         console.log(`   ⚠️ Skipping completed collection: ${collection.name} (${collection.id})`);
         continue;
       }
+      const filter: { collectionId: string } | { tag: string } =
+        collection.tag ? { tag: collection.tag } : { collectionId: collection.id };
       await syncCollection(
         client,
         collection.id,
         collection.name,
-        collection.campaignId
+        collection.campaignId,
+        filter,
       );
     }
 

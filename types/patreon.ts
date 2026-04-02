@@ -3,7 +3,10 @@
  */
 
 export interface PatreonCollection {
+  /** Local folder identifier (always required). Used as the directory name under `content/`. */
   id: string;
+  /** Patreon tag slug. When provided, uses `filter[tag]` for the API query instead of `filter[collection_id]`. */
+  tag?: string;
   name: string;
   campaignId: string;
   complete?: boolean;

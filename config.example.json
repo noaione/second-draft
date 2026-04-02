@@ -5,7 +5,13 @@
     "collections": [
       {
         "id": "12345",
-        "name": "Example Collection",
+        "name": "Example Collection (by collection ID)",
+        "campaignId": "67890"
+      },
+      {
+        "id": "my-local-folder",
+        "tag": "some-tag-slug",
+        "name": "Example Collection (by tag)",
         "campaignId": "67890"
       }
     ]
