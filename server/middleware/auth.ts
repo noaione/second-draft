@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
   // Skip authentication for these paths
   const publicPaths = [
     '/login',
+    '/api/health',
     '/api/auth/login',
     '/api/auth/logout',
     '/api/auth/check',
