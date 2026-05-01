@@ -35,11 +35,11 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-    <div class="max-w-md w-full space-y-8">
+  <div class="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 px-4">
+    <div class="max-w-md w-full space-y-2">
       <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white"> protected content </h2>
-        <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400"> please enter the password to continue </p>
+        <h2 class="text-center text-3xl font-bold text-zinc-900 dark:text-white"> protected content </h2>
+        <p class="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-400"> please enter the password to continue </p>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
         <div>
@@ -49,7 +49,7 @@ const handleSubmit = () => {
             v-model="password"
             type="password"
             required
-            class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+            class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-zinc-900 dark:text-white bg-white dark:bg-zinc-800 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
             placeholder="Password"
             :disabled="loading" />
         </div>
@@ -67,6 +67,13 @@ const handleSubmit = () => {
           </button>
         </div>
       </form>
+
+      <div class="mt-8 text-center font-medium">
+        <p>
+          powered by 
+          <a href="https://github.com/noaione/second-draft" target="_blank" rel="noopener noreferer" class="hover:underline decoration-dashed font-bold">#seconddraft</a>
+        </p>
+      </div>
     </div>
   </div>
 </template>
