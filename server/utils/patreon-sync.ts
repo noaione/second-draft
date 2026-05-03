@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs';
+import fsSync from 'node:fs';
 import { join } from 'node:path';
 import TurndownService from 'turndown';
 import type { AppConfig, CollectionMetadata, PatreonPostsListResponse, PostMetadata } from '../../types/patreon';
@@ -41,6 +42,23 @@ async function saveCollectionMetadata(
   await ensureDir(collectionDir);
 
   const metadataPath = join(collectionDir, 'index.json');
+  // read the data first, then merge the posts together
+  let oldPosts = [];
+  if (fsSync.existsSync(metadataPath)) {
+    const readData = await fs.readFile(metadataPath, 'utf-8');
+    oldPosts = JSON.parse(readData).posts || [];
+  }
+
+  // merge data together, prioritizing new posts metadata
+  const mergedPosts = [...oldPosts, ...metadata.posts];
+  // unique set
+  const uniquePosts = new Set(mergedPosts.map((post) => post.postId));
+
+  metadata.posts = Array.from(uniquePosts).map((postId) => {
+    return mergedPosts.find((post) => post.postId === postId)!;
+  });
+  metadata.posts.sort((ab, bc) => ab.postId - bc.postId);
+  metadata.postCount = metadata.posts.length;
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }
 
@@ -187,6 +205,8 @@ async function syncCollection(
     }
   }
 
+  const finalizedPosts = posts.map(post => patreonToMeta(post, collectionId, collectionName, creatorName));
+
   // Update collection metadata
   const totalPosts = downloadedPosts.size + downloadedCount;
   const metadata: CollectionMetadata = {
@@ -195,13 +215,62 @@ async function syncCollection(
     campaignId,
     lastSync: new Date().toISOString(),
     postCount: totalPosts,
-    posts: posts.map(post => patreonToMeta(post, collectionId, collectionName, creatorName)),
+    posts: finalizedPosts,
   };
 
   await saveCollectionMetadata(collectionId, metadata);
 
   console.log(`   ✨ Sync complete! Downloaded ${downloadedCount} new posts`);
   console.log(`   📊 Total posts in collection: ${totalPosts}`);
+}
+
+export async function syncSinglePatreonPost(rootDir: string, postId: string, collectionId: string) {
+  console.log(`\n🔄 Syncing single post: ${postId}`);
+  
+  const config = await loadConfig(rootDir);
+
+  if (!config.patreon.sessionCookie) {
+    throw new Error('Patreon session cookie not configured in config.json');
+  }
+
+  // Find collection
+  const collection = config.patreon.collections.find((collection) => collection.id === collectionId);
+  if (!collection) {
+    throw new Error(`Collection ${collectionId} not found in config.json`);
+  }
+
+  const client = new PatreonClient(config.patreon.sessionCookie);
+
+  const rawPost = await client.getPost(postId);
+  const post = rawPost.data;
+  const title = post.attributes.title || 'Untitled Post';
+
+  console.log(`   📥 Downloading: ${title} (${postId})`);
+
+  // Prefer structured JSON over HTML when available
+  const jsonString = post.attributes.content_json_string;
+  const markdownContent =
+    patreonJsonToMarkdown(jsonString) ??
+    htmlToMarkdown(post.attributes.content || '');
+
+  const creator = client.extractUserFromIncluded(rawPost.included);
+  const creatorName = creator?.full_name || 'Unknown Creator';
+
+  // Create post metadata
+  const metadata = patreonToMeta(post, collectionId, collection.name, creatorName);
+
+  // Save post
+  await savePost(collectionId, postId, metadata, markdownContent);
+  const collectionMeta: CollectionMetadata = {
+    id: collectionId,
+    name: collection.name,
+    campaignId: collection.campaignId,
+    lastSync: new Date().toISOString(),
+    postCount: 1,
+    posts: [metadata],
+  };
+
+  await saveCollectionMetadata(collectionId, collectionMeta);
 }
 
 export async function syncPatreon(rootDir: string) {

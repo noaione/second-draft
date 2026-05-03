@@ -110,7 +110,7 @@ export class PatreonClient {
       `/posts/${postId}`,
       {
         'include': 'user,campaign',
-        'fields[post]': 'title,content,published_at,url,post_type',
+        'fields[post]': 'title,content,content_json_string,published_at,url,post_type',
         'fields[user]': 'full_name,url',
       }
     );
@@ -121,11 +121,15 @@ export class PatreonClient {
    */
   extractUserFromIncluded(
     included: Array<{ id: string; type: string; attributes: Record<string, any> }> | undefined,
-    userId: string
+    userId?: string
   ): { full_name: string; url: string } | null {
     if (!included) return null;
 
-    const user = included.find(item => item.type === 'user' && item.id === userId);
+    const user = included.find(item => {
+      if (item.type !== 'user') return false;
+      if (userId && item.id !== userId) return false;
+      return true;
+    });
     if (!user) return null;
 
     return {
