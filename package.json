@@ -16,6 +16,7 @@
     "@nuxtjs/mdc": "^0.20.0",
     "@tailwindcss/typography": "^0.5.19",
     "@types/mdast": "^4.0.4",
+    "@vueuse/nuxt": "14.3.0",
     "bcrypt": "^6.0.0",
     "db0": "^0.3.4",
     "iron-session": "^8.0.3",
@@ -29,6 +30,7 @@
     "turndown": "^7.2.0",
     "typescript": "^5.6.3",
     "unist-util-visit": "^5.1.0",
+    "vue": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

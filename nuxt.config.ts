@@ -2,11 +2,7 @@ const rootDir = import.meta.dirname;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: [
-    '@nuxtjs/mdc',
-    '@nuxt/fonts',
-    '@nuxt/ui',
-  ],
+  modules: ['@nuxtjs/mdc', '@nuxt/fonts', '@nuxt/ui', "@vueuse/nuxt"],
   css: ['~/assets/css/styles.css'],
   devtools: { enabled: true },
   compatibilityDate: '2026-01-26',

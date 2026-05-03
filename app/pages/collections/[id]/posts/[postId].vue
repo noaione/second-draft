@@ -31,7 +31,7 @@
               prefetch
               variant="ghost"
               color="neutral"
-              icon="lucide:arrow-left"
+              icon="lucide:table-of-contents"
               size="sm"
               square
               class="sm:hidden"
@@ -41,7 +41,7 @@
               prefetch
               variant="ghost"
               color="neutral"
-              icon="lucide:arrow-left"
+              icon="lucide:table-of-contents"
               size="sm"
               class="hidden sm:flex"
             >
@@ -55,7 +55,7 @@
               v-model="postId"
               :items="sortedPosts.map(p => ({ label: p.title, value: p.postId }))"
               placeholder="Select a chapter"
-              class="w-full"
+              class="w-full ps-4 pe-4"
               @update:model-value="(value) => navigateTo(`/collections/${collectionId}/posts/${value}`)"
               :ui="{
                 leading: 'relative ps-0'
@@ -154,7 +154,7 @@
         </template>
 
         <!-- Post Content -->
-        <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg text-base">
+        <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg text-base" ref="readerRef">
           <MDCRenderer v-if="computedBody !== null" :body="computedBody" />
         </div>
 
@@ -231,7 +231,16 @@
 import type { MDCRoot } from '@nuxtjs/mdc';
 import type { MinimarkTree } from 'minimark';
 import { toHast } from 'minimark/hast';
+import { useScroll } from '@vueuse/core';
 
+interface ReadingState {
+  id: string;
+  cid: string;
+}
+
+const readerRef = useTemplateRef('readerRef');
+const { y } = useWindowScroll();
+const readData = useLocalStorage<ReadingState[]>('finished-reading', []);
 const route = useRoute();
 const collectionId = route.params.id as string;
 const postId = route.params.postId as string;
@@ -296,6 +305,36 @@ const formatDate = (dateString: string) => {
     day: 'numeric',
   });
 };
+
+function addToFinishedReading() {
+  const existing = readData.value.find(r => r.id === post.value!.postId);
+  if (existing) return;
+  readData.value.push({
+    id: post.value!.postId,
+    cid: post.value!.collectionId,
+  });
+}
+
+const stop = watch(y, () => {
+  const el = readerRef.value;
+  if (!el) return;
+  if (computedBody.value === null) return; // ignore
+
+  const rect = el.getBoundingClientRect();
+  const windowHeight = window.innerHeight;
+
+  const elementTop = rect.top + window.scrollY;
+  const elementHeight = el.offsetHeight;
+
+  const scrolled = window.scrollY + windowHeight - elementTop;
+  const progress = scrolled / elementHeight;
+
+  if (progress >= 0.9) {
+    console.log('Marked as read');
+    addToFinishedReading();
+    stop();
+  }
+});
 
 useSeoMeta({
   title: post.value!.title,

@@ -1,11 +1,31 @@
 <script setup lang="ts">
+enum ResultNew {
+  None = 'none',
+  Chapter = 'chapter',
+  Series = 'series',
+}
+
 interface CollectionMetadata {
   id: string;
   name: string;
   campaignId: string;
   lastSync: string;
   postCount: number;
+  author?: string;
+  hasNew?: ResultNew;
 }
+
+interface ReadingState {
+  id: string;
+  cid: string;
+}
+
+interface CachedCounter {
+  cid: string;
+  count: number;
+}
+
+const cachedCounter = useLocalStorage<CachedCounter[]>('cached-counters', []);
 
 // Get all collections
 const firstLoad = ref(true);
@@ -14,7 +34,19 @@ const collections = ref<CollectionMetadata[]>([]);
 onMounted(async () => {
   try {
     const response = await $fetch<CollectionMetadata[]>('/api/collections');
+    // Set hasNew
+    for (const collection of response) {
+      collection.hasNew = hasNewChapters(collection);
+    }
+
     collections.value = response;
+    // Set cached counters
+    const mergedCounters = [];
+    for (const collection of collections.value) {
+      mergedCounters.push({ cid: collection.id, count: collection.postCount });
+    }
+
+    cachedCounter.value = mergedCounters;
   } catch (error) {
     console.error('Error loading collections:', error);
   } finally {
@@ -29,6 +61,12 @@ const formatDate = (dateString: string) => {
     day: 'numeric',
   });
 };
+
+const hasNewChapters = (collection: CollectionMetadata): ResultNew => {
+  const countRead = cachedCounter.value.find(c => c.cid === collection.id)?.count;
+  if (!countRead) return ResultNew.Series; // new series!
+  return collection.postCount > countRead ? ResultNew.Chapter : ResultNew.None;
+}
 
 const logout = async () => {
   await $fetch('/api/auth/logout', { method: 'POST' });
@@ -103,6 +141,10 @@ const logout = async () => {
             </template>
 
             <div class="space-y-3">
+              <div v-if="collection.author" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <UIcon name="lucide:circle-user-round" />
+                <span>{{ collection.author }}</span>
+              </div>
               <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <UIcon name="lucide:file" />
                 <span>{{ collection.postCount }} chapters</span>
@@ -111,6 +153,9 @@ const logout = async () => {
                 <UIcon name="lucide:clock" />
                 <span>last synced {{ formatDate(collection.lastSync) }}</span>
               </div>
+              <UBadge v-if="collection.hasNew && collection.hasNew !== ResultNew.None" :color="collection.hasNew === ResultNew.Series ? 'success' : 'info'" variant="subtle">
+                {{ collection.hasNew === ResultNew.Chapter ? 'new chapter' : 'new series' }}
+              </UBadge>
             </div>
 
             <template #footer>

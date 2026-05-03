@@ -21,6 +21,7 @@ interface CollectionMetadata {
   name: string;
   campaignId: string;
   lastSync: string;
+  author?: string;
   postCount: number;
 }
 
@@ -272,6 +273,10 @@ watch([posts, search], ([newPosts, searchData]) => {
             {{ collection.name }}
           </h1>
           <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div v-if="collection.author" class="flex items-center gap-2">
+              <UIcon name="lucide:circle-user-round" />
+              <span>{{ collection.author }}</span>
+            </div>
             <div class="flex items-center gap-2">
               <UIcon name="lucide:file" />
               <span>{{ collection.postCount }} chapters</span>
