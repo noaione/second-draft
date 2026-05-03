@@ -33,6 +33,7 @@ import type {
   BlockContent,
   RootContent,
 } from 'mdast';
+import { gfmToMarkdown } from 'mdast-util-gfm';
 
 // ---------------------------------------------------------------------------
 // Patreon JSON types
@@ -364,5 +365,6 @@ export function patreonJsonToMarkdown(json: string | null | undefined): string |
     emphasis: '_',
     strong: '*',
     fence: '`',
+    extensions: [gfmToMarkdown()]
   });
 }
