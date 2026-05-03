@@ -215,6 +215,7 @@ async function syncCollection(
     campaignId,
     lastSync: new Date().toISOString(),
     postCount: totalPosts,
+    author: creatorName,
     posts: finalizedPosts,
   };
 
@@ -267,6 +268,7 @@ export async function syncSinglePatreonPost(rootDir: string, postId: string, col
     campaignId: collection.campaignId,
     lastSync: new Date().toISOString(),
     postCount: 1,
+    author: creatorName,
     posts: [metadata],
   };
 

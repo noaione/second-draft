@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Sort by name
-    collections.sort((a, b) => a.name.localeCompare(b.name));
+    collections.sort((a, b) => a.id - b.id);
 
     return collections;
   } catch (error) {
