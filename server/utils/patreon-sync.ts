@@ -50,14 +50,14 @@ async function saveCollectionMetadata(
   }
 
   // merge data together, prioritizing new posts metadata
-  const mergedPosts = [...oldPosts, ...metadata.posts];
+  const mergedPosts = [...oldPosts, ...(metadata.posts ?? [])];
   // unique set
   const uniquePosts = new Set(mergedPosts.map((post) => post.postId));
 
   metadata.posts = Array.from(uniquePosts).map((postId) => {
     return mergedPosts.find((post) => post.postId === postId)!;
   });
-  metadata.posts.sort((ab, bc) => ab.postId - bc.postId);
+  metadata.posts.sort((ab, bc) => ab.postId.localeCompare(bc.postId));
   metadata.postCount = metadata.posts.length;
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }
