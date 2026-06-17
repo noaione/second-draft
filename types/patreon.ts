@@ -20,6 +20,10 @@ export interface PatreonConfig {
 export interface AppConfig {
   password: string;
   patreon: PatreonConfig;
+  /** Optional Discord webhook for sync notifications */
+  discord?: {
+    webhookUrl: string;
+  };
 }
 
 /**

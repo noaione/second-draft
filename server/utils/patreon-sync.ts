@@ -5,6 +5,7 @@ import TurndownService from 'turndown';
 import type { AppConfig, CollectionMetadata, PatreonPostsListResponse, PostMetadata } from '../../types/patreon';
 import { PatreonClient } from './patreon-client';
 import { patreonJsonToMarkdown } from './patreon-json-parser';
+import { sendDiscordNotification, type SyncCollectionResult } from './discord-notifier';
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -151,7 +152,7 @@ async function syncCollection(
   collectionName: string,
   campaignId: string,
   filter: { collectionId: string } | { tag: string },
-): Promise<void> {
+): Promise<SyncCollectionResult> {
   console.log(`\n🔄 Syncing collection: ${collectionName} (${collectionId})`);
 
   // Get campaign info to extract creator name
@@ -221,8 +222,18 @@ async function syncCollection(
 
   await saveCollectionMetadata(collectionId, metadata);
 
+  const isNewSeries = downloadedPosts.size === 0;
+
   console.log(`   ✨ Sync complete! Downloaded ${downloadedCount} new posts`);
   console.log(`   📊 Total posts in collection: ${totalPosts}`);
+
+  return {
+    collectionName,
+    collectionId,
+    isNew: isNewSeries,
+    newChapterCount: downloadedCount,
+    totalChapters: totalPosts,
+  };
 }
 
 export async function syncSinglePatreonPost(rootDir: string, postId: string, collectionId: string) {
@@ -302,6 +313,7 @@ export async function syncPatreon(rootDir: string) {
     }
 
     // Sync each collection
+    const syncResults: SyncCollectionResult[] = [];
     for (const collection of collectionsToSync) {
       if (collection.complete) {
         console.log(`   ⚠️ Skipping completed collection: ${collection.name} (${collection.id})`);
@@ -309,16 +321,22 @@ export async function syncPatreon(rootDir: string) {
       }
       const filter: { collectionId: string } | { tag: string } =
         collection.tag ? { tag: collection.tag } : { collectionId: collection.id };
-      await syncCollection(
+      const result = await syncCollection(
         client,
         collection.id,
         collection.name,
         collection.campaignId,
         filter,
       );
+      syncResults.push(result);
     }
 
     console.log('\n✅ All collections synced successfully!');
+
+    // Send Discord notification if configured
+    if (config.discord?.webhookUrl) {
+      await sendDiscordNotification(config.discord.webhookUrl, syncResults);
+    }
 
     return {
       result: 'Sync completed',
