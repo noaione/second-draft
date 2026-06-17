@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "sync:patreon": "bun run ./scripts/sync-data.ts"
+    "sync:patreon": "bun run ./scripts/sync-data.ts",
+    "sync:posts": "bun run ./scripts/sync-posts.ts"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.87",

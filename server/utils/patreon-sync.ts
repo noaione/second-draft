@@ -286,6 +286,99 @@ export async function syncSinglePatreonPost(rootDir: string, postId: string, col
   await saveCollectionMetadata(collectionId, collectionMeta);
 }
 
+/**
+ * Manually sync specific posts by their Patreon IDs into a collection.
+ * Useful for backfilling missing chapters that aren't returned by the
+ * normal collection/tag-based API queries.
+ *
+ * Returns the same result shape as `syncCollection` so notifications
+ * can be sent if desired.
+ */
+export async function syncPostsByIds(
+  rootDir: string,
+  collectionId: string,
+  postIds: string[],
+): Promise<SyncCollectionResult> {
+  console.log(`\n🔄 Syncing ${postIds.length} specific post(s) into collection: ${collectionId}`);
+
+  const config = await loadConfig(rootDir);
+
+  if (!config.patreon.sessionCookie) {
+    throw new Error('Patreon session cookie not configured in config.json');
+  }
+
+  const collection = config.patreon.collections.find((c) => c.id === collectionId);
+  if (!collection) {
+    throw new Error(`Collection "${collectionId}" not found in config.json`);
+  }
+
+  const client = new PatreonClient(config.patreon.sessionCookie);
+
+  // Count existing posts before we start
+  const downloadedBefore = await getDownloadedPosts(collectionId);
+
+  let downloadedCount = 0;
+  const newMeta: PostMetadata[] = [];
+
+  for (const postId of postIds) {
+    try {
+      console.log(`   📥 Fetching post: ${postId}`);
+
+      const rawPost = await client.getPost(postId);
+      const post = rawPost.data;
+      const title = post.attributes.title || 'Untitled Post';
+
+      // Prefer structured JSON over HTML when available
+      const jsonString = post.attributes.content_json_string;
+      const markdownContent =
+        patreonJsonToMarkdown(jsonString) ??
+        htmlToMarkdown(post.attributes.content || '');
+
+      const creator = client.extractUserFromIncluded(rawPost.included);
+      const creatorName = creator?.full_name || 'Unknown Creator';
+
+      const metadata = patreonToMeta(post, collectionId, collection.name, creatorName);
+
+      await savePost(collectionId, postId, metadata, markdownContent);
+      downloadedCount++;
+      newMeta.push(metadata);
+
+      console.log(`   ✅ Saved: ${title} (${postId})`);
+    } catch (error) {
+      console.error(`   ❌ Error downloading post ${postId}:`, error);
+    }
+  }
+
+  // Merge metadata into the collection index.json
+  const downloadedAfter = await getDownloadedPosts(collectionId);
+  const totalPosts = downloadedAfter.size;
+
+  const collectionMeta: CollectionMetadata = {
+    id: collectionId,
+    name: collection.name,
+    campaignId: collection.campaignId,
+    lastSync: new Date().toISOString(),
+    postCount: totalPosts,
+    author: newMeta[0]?.author,
+    posts: newMeta,
+  };
+
+  await saveCollectionMetadata(collectionId, collectionMeta);
+
+  const isNewSeries = downloadedBefore.size === 0;
+
+  console.log(`   ✨ Done! Downloaded ${downloadedCount} post(s)`);
+  console.log(`   📊 Total posts in collection: ${totalPosts}`);
+
+  return {
+    collectionName: collection.name,
+    collectionId,
+    isNew: isNewSeries,
+    newChapterCount: downloadedCount,
+    totalChapters: totalPosts,
+  };
+}
+
 export async function syncPatreon(rootDir: string) {
   console.log('🚀 Starting Patreon sync task...');
 
