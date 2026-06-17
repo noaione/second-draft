@@ -272,7 +272,7 @@ watch([posts, search], ([newPosts, searchData]) => {
           <h1 class="text-4xl font-bold text-gray-900 dark:text-white">
             {{ collection.name }}
           </h1>
-          <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+          <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-sm text-gray-600 dark:text-gray-400">
             <div v-if="collection.author" class="flex items-center gap-2">
               <UIcon name="lucide:circle-user-round" />
               <span>{{ collection.author }}</span>
@@ -290,7 +290,7 @@ watch([posts, search], ([newPosts, searchData]) => {
 
         <UCard class="shadow-lg">
           <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                 chapters
               </h2>
@@ -299,7 +299,7 @@ watch([posts, search], ([newPosts, searchData]) => {
                 placeholder="search chapters..."
                 icon="lucide:search"
                 size="sm"
-                class="w-64"
+                class="w-full md:w-64"
               />
             </div>
           </template>
