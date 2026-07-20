@@ -58,6 +58,9 @@ jobs:
     permissions:
       id-token: write # This is required for the Tailscale action to request a JWT from GitHub
     steps:
+      - name: Mask target repo name
+        run: echo "::add-mask::${{ secrets.PATREON_TARGET_REPO }}"
+
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
         with:
