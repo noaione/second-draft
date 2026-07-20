@@ -50,3 +50,21 @@ jobs:
           fi
           git commit -m "Sync Patreon content"
           git push
+
+  deploy:
+    needs: sync
+    runs-on: ubuntu-latest
+    if: github.repository == 'noaione/second-draft'
+    permissions:
+      id-token: write # This is required for the Tailscale action to request a JWT from GitHub
+    steps:
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - name: Pull latest content on server
+        run: |
+          tailscale ssh ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} "cd /opt/second-draft/content && git pull"
