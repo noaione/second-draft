@@ -17,9 +17,24 @@ export interface PatreonConfig {
   collections: PatreonCollection[];
 }
 
+export interface WattpadCollection {
+  /** Wattpad story id — also doubles as the source identifier (no separate local-folder id, unlike Patreon) */
+  id: string;
+  name: string;
+  complete?: boolean;
+}
+
+export interface WattpadConfig {
+  /** Optional — only needed for mature/paywalled stories */
+  sessionCookie?: string;
+  collections: WattpadCollection[];
+}
+
 export interface AppConfig {
   password: string;
-  patreon: PatreonConfig;
+  /** Independent, optional source blocks — either, both, or neither may be configured */
+  patreon?: PatreonConfig;
+  wattpad?: WattpadConfig;
   /** Optional Discord webhook for sync notifications */
   discord?: {
     webhookUrl: string;
@@ -27,16 +42,23 @@ export interface AppConfig {
 }
 
 /**
+ * Content source a collection/sync result originated from.
+ */
+export type ContentMode = 'patreon' | 'wattpad';
+
+/**
  * Collection metadata stored in index.json
  */
 export interface CollectionMetadata {
   id: string;
   name: string;
+  /** Patreon campaign id, or Wattpad story id for Wattpad-sourced collections */
   campaignId: string;
   lastSync: string; // ISO 8601 date string
   postCount: number;
   author?: string;
   posts?: PostMetadata[];
+  mode: ContentMode;
 }
 
 /**

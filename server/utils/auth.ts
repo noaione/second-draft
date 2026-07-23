@@ -1,9 +1,7 @@
-import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
 import bcrypt from 'bcrypt';
 import { getIronSession, type IronSession } from 'iron-session';
 import type { H3Event } from 'h3';
-import type { AppConfig } from '../../types/patreon';
+import { loadConfig } from './config';
 
 interface SessionData {
   authenticated?: boolean;
@@ -23,16 +21,6 @@ const SESSION_OPTIONS = {
 };
 
 /**
- * Load configuration
- */
-async function loadConfig(event: H3Event): Promise<AppConfig> {
-  const runtimeConfig = useRuntimeConfig(event);
-  const configPath = join(runtimeConfig.rootDir, 'config.json');
-  const configData = await fs.readFile(configPath, 'utf-8');
-  return JSON.parse(configData);
-}
-
-/**
  * Get iron session from H3 event
  */
 export async function getSDraftSession(event: H3Event): Promise<IronSession<SessionData>> {
@@ -45,7 +33,8 @@ export async function getSDraftSession(event: H3Event): Promise<IronSession<Sess
  * Verify password against configured password
  */
 export async function verifyPassword(event: H3Event, password: string): Promise<boolean> {
-  const config = await loadConfig(event);
+  const runtimeConfig = useRuntimeConfig(event);
+  const config = await loadConfig(runtimeConfig.rootDir);
 
   // Check if password is hashed (starts with $2a$, $2b$, or $2y$)
   if (config.password.startsWith('$2')) {

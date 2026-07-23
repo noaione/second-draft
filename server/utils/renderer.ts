@@ -15,7 +15,7 @@ import typescript from '@shikijs/langs/typescript';
 import { createOnigurumaEngine, Highlighter } from "shiki";
 
 import { fromHast } from "minimark/hast";
-import { PostMetadata } from "~~/types/patreon";
+import { PostMetadata } from "~~/types/config";
 import { RenderedMarkdownResult } from "./db";
 
 type HighlightedNode = { type: 'element', properties?: Record<string, string | undefined> }

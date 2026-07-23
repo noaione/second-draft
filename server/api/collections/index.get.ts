@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
-import type { CollectionMetadata } from '../../../types/patreon';
+import type { CollectionMetadata } from '../../../types/config';
 
 export default defineEventHandler(async (event) => {
   const runtimeConfig = useRuntimeConfig(event);

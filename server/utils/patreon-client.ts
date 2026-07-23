@@ -2,7 +2,7 @@ import type {
   PatreonPostsListResponse,
   PatreonPost,
   PatreonCampaign,
-} from '../../types/patreon';
+} from '../../types/config';
 
 /**
  * Patreon API Client

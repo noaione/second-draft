@@ -1,7 +1,7 @@
 import { createDatabase, Primitive } from "db0";
 import nodeSqlite3Connector from "db0/connectors/sqlite3";
 import { MinimarkTree } from "minimark";
-import { PostMetadata } from "~~/types/patreon";
+import { PostMetadata } from "~~/types/config";
 
 const tableName = 'seconddraft_posts';
 
