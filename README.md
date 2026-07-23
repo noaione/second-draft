@@ -27,12 +27,14 @@ basically:
    - you would set `id` to `411139801` in the config.
 
 
-After that run the following
+after that run the following
 ```bash
 bun run sync:patreon
 ```
 
-Which would start fetching the content from patreon (and wattpad), the posts will be auto compiled from markdown to HTML and cached in a sqlite database for later use.
+which would start fetching the content from patreon (and wattpad), the posts will be stored to `./content` folder.
+
+you do not need to restart the server after fetching new content, the server will automatically detect new content and render it on demand (+ cache it).
 
 ## license
 
