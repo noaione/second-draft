@@ -34,12 +34,13 @@ const turndownService = new TurndownService({
 // that plain Markdown can't express. Re-wrap any element that has a style
 // attribute as raw HTML instead of losing it to turndown's default plain-
 // text handling — @nuxtjs/mdc passes raw HTML in Markdown through untouched.
+// `node` is a turndown/domino DOM-like element, not a browser DOM node — the
+// server tsconfig has no `dom` lib, so `getAttribute`/`nodeName` are typed as `any`.
 turndownService.addRule('styledInline', {
-  filter: (node) => Boolean(node.getAttribute && node.getAttribute('style')),
-  replacement: (content, node) => {
-    const element = node as unknown as HTMLElement;
-    const tag = element.nodeName.toLowerCase();
-    const style = element.getAttribute('style');
+  filter: (node: any) => Boolean(node.getAttribute && node.getAttribute('style')),
+  replacement: (content: string, node: any) => {
+    const tag = node.nodeName.toLowerCase();
+    const style = node.getAttribute('style');
     return `<${tag} style="${style}">${content}</${tag}>`;
   },
 });
