@@ -1,8 +1,42 @@
 # #seconddraft
 
-simple patreon mirror for personal use
+simple patreon (and wattpad) mirror for personal use
 
 mainly created since I hate using patreon to navigate WN content
+
+## installation
+
+```bash
+bun install --frozen-lockfile
+bun run build
+bun run .output/server/index.mjs
+```
+
+## configuring and fetching content
+
+see the `config.example.json` file for the configuration options, rename to `config.json` and fill in the values.
+
+basically:
+1. set sessionCookie with the list of cookies separated like this: `cookie1=value1; cookie2=value2; cookie3=value3`
+2. set the collections of each patreon collections/tag you want to mirror in the `collections` array (see the example config for the format), this requires you to dive into the network inspector to find:
+    - `id` for the collection ID if they use collection
+    - `tag` for the tag name if they use tagging
+    - `campaignId` for the creator campaign/membership ID (this is required for both collection and tag)
+3. same thing for wattpad, but you only need to set the `id` for the story ID.
+   - example: `https://www.wattpad.com/story/411139801-a-yuri-story-of-mutual-unrequited-love`
+   - you would set `id` to `411139801` in the config.
+
+
+After that run the following
+```bash
+bun run sync:patreon
+```
+
+Which would start fetching the content from patreon (and wattpad), the posts will be auto compiled from markdown to HTML and cached in a sqlite database for later use.
+
+## license
+
+WTFPL – do whatever you want with it.
 
 ### warning
 
