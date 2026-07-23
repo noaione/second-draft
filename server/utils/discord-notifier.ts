@@ -1,5 +1,5 @@
 /**
- * Discord webhook notifier for Patreon sync reports.
+ * Discord webhook notifier for sync reports (Patreon, Wattpad).
  *
  * Notifies when:
  *   1. A new series is added (with chapter count)
@@ -7,6 +7,8 @@
  *
  * Only results with `newChapterCount > 0` trigger a notification.
  */
+
+import type { ContentMode } from '../../types/config';
 
 export interface SyncCollectionResult {
   collectionName: string;
@@ -17,6 +19,7 @@ export interface SyncCollectionResult {
   newChapterCount: number;
   /** Total chapter count after the sync */
   totalChapters: number;
+  mode: ContentMode;
 }
 
 interface DiscordEmbed {
@@ -67,8 +70,15 @@ export async function sendDiscordNotification(
     );
   }
 
+  const modes = new Set(relevant.map((r) => r.mode));
+  const title = modes.size > 1
+    ? '🔄 Sync Report'
+    : modes.has('wattpad')
+      ? '📖 Wattpad Sync Report'
+      : '📚 Patreon Sync Report';
+
   const embed: DiscordEmbed = {
-    title: '📚 Patreon Sync Report',
+    title,
     description: descParts.join('\n'),
     color: newSeries.length > 0 ? 0x57F287 : 0x5865F2, // green for new, blurple for updates
     fields: [],

@@ -37,7 +37,7 @@ const turndownService = new TurndownService({
 turndownService.addRule('styledInline', {
   filter: (node) => Boolean(node.getAttribute && node.getAttribute('style')),
   replacement: (content, node) => {
-    const element = node as unknown as Element;
+    const element = node as unknown as HTMLElement;
     const tag = element.nodeName.toLowerCase();
     const style = element.getAttribute('style');
     return `<${tag} style="${style}">${content}</${tag}>`;
