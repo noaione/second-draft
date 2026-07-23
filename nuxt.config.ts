@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/mdc', '@nuxt/fonts', '@nuxt/ui', "@vueuse/nuxt"],
   css: ['~/assets/css/styles.css'],
   devtools: { enabled: true },
-  compatibilityDate: '2026-01-26',
+  compatibilityDate: '2027-07-23',
   app: {
     head: {
       htmlAttrs: {
