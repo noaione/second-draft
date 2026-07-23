@@ -108,8 +108,30 @@ const logout = async () => {
           </p>
         </div>
 
+        <!-- Loading State -->
+        <div v-if="firstLoad" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
+          <UCard v-for="n in 6" :key="n">
+            <template #header>
+              <div class="flex items-start justify-between">
+                <USkeleton class="h-6 w-2/3" />
+                <USkeleton class="h-5 w-5 rounded-full" />
+              </div>
+            </template>
+
+            <div class="space-y-3">
+              <USkeleton class="h-4 w-1/2" />
+              <USkeleton class="h-4 w-1/3" />
+              <USkeleton class="h-4 w-2/3" />
+            </div>
+
+            <template #footer>
+              <USkeleton class="h-8 w-full" />
+            </template>
+          </UCard>
+        </div>
+
         <!-- Empty State -->
-        <UCard v-if="!firstLoad && collections.length === 0" class="shadow-lg">
+        <UCard v-else-if="collections.length === 0" class="shadow-lg">
           <div class="text-center py-12">
             <UIcon name="lucide:folder-open" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
