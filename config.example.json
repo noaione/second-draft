@@ -16,6 +16,12 @@
       }
     ]
   },
+  "wattpad": {
+    "sessionCookie": "",
+    "collections": [
+      { "id": "123456789", "name": "Example Story", "complete": false }
+    ]
+  },
   "discord": {
     "webhookUrl": "https://discord.com/api/webhooks/your-webhook-id/your-webhook-token"
   }
