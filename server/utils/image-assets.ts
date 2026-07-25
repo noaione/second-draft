@@ -5,8 +5,9 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { fromMarkdown } from 'mdast-util-from-markdown';
+import { toMarkdown } from 'mdast-util-to-markdown';
 import { visit } from 'unist-util-visit';
-import type { Html, Image } from 'mdast';
+import type { Image, Root } from 'mdast';
 import type { S3AssetsConfig } from '../../types/config';
 
 let cachedClient: { client: S3Client; cacheKey: string } | undefined;
@@ -36,46 +37,58 @@ export function getS3Client(s3: S3AssetsConfig): S3Client {
   return client;
 }
 
-/** Build the S3 key for an image belonging to a given post. */
-export function buildImageKey(s3: S3AssetsConfig, collectionId: string, postId: string, imgName: string): string {
-  return `${s3.prefix ? `${s3.prefix}/` : ''}${collectionId}/${postId}/${imgName}`;
+/** Build the S3 key for an image belonging to a given series. */
+export function buildImageKey(s3: S3AssetsConfig, seriesId: string, imageKey: string): string {
+  return `${s3.prefix ? `${s3.prefix}/` : ''}${seriesId}/${imageKey}`;
+}
+
+/** Build the former per-post key so existing proxied images remain readable. */
+export function buildLegacyImageKey(
+  s3: S3AssetsConfig,
+  seriesId: string,
+  postId: string,
+  imageKey: string,
+): string {
+  return `${s3.prefix ? `${s3.prefix}/` : ''}${seriesId}/${postId}/${imageKey}`;
 }
 
 /** Build the same-origin proxy URL path that serves a rewritten image. */
-export function buildProxyUrl(collectionId: string, postId: string, imgName: string): string {
-  return `/api/collections/${collectionId}/posts/${postId}/img-proxy?img=${imgName}`;
+export function buildProxyUrl(seriesId: string, postId: string, imageKey: string): string {
+  return `/api/collections/${seriesId}/posts/${postId}/img-proxy?img=${imageKey}`;
 }
 
-function proxyUrlPrefix(collectionId: string, postId: string): string {
-  return `/api/collections/${collectionId}/posts/${postId}/img-proxy?img=`;
+function isProxyUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, 'http://localhost');
+    return /^\/api\/collections\/[^/]+\/posts\/[^/]+\/img-proxy$/.test(parsed.pathname)
+      && parsed.searchParams.has('img');
+  } catch {
+    return false;
+  }
 }
 
-const EXT_BY_CONTENT_TYPE: Record<string, string> = {
+function normalizeContentType(contentType: string | null): string {
+  if (!contentType) return 'application/octet-stream';
+  return contentType.split(';')[0]!.trim().toLowerCase();
+}
+
+const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
+  'image/avif': '.avif',
+  'image/gif': '.gif',
   'image/jpeg': '.jpg',
   'image/jpg': '.jpg',
   'image/png': '.png',
-  'image/gif': '.gif',
-  'image/webp': '.webp',
-  'image/avif': '.avif',
   'image/svg+xml': '.svg',
+  'image/webp': '.webp',
 };
 
-function extensionFromContentType(contentType: string | null, url: string): string {
-  if (contentType) {
-    const base = contentType.split(';')[0]!.trim().toLowerCase();
-    const known = EXT_BY_CONTENT_TYPE[base];
-    if (known) return known;
-  }
+export function imageExtension(contentType: string | null, url: string): string {
+  const extensionForType = EXTENSION_BY_CONTENT_TYPE[normalizeContentType(contentType)];
+  if (extensionForType) return extensionForType;
 
-  try {
-    const pathname = new URL(url).pathname;
-    const match = /\.([a-zA-Z0-9]+)$/.exec(pathname);
-    if (match) return `.${match[1]!.toLowerCase()}`;
-  } catch {
-    // Not a valid absolute URL — fall through to default
-  }
-
-  return '.jpg';
+  const pathname = new URL(canonicalImageUrl(url)).pathname;
+  const match = /\.([a-zA-Z0-9]+)$/.exec(pathname);
+  return match ? `.${match[1]!.toLowerCase()}` : '.jpg';
 }
 
 async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string | null }> {
@@ -120,68 +133,63 @@ async function uploadIfMissing(
   );
 }
 
-interface ImageRef {
-  url: string;
-  start: number;
-  end: number;
-}
-
-// Wattpad's styled-paragraph passthrough (see `styledInline` in
-// wattpad-html-to-markdown.ts) wraps image markdown in raw `<p style="...">`
-// tags. A run of those with no blank line between them collapses into a
-// single CommonMark raw-HTML-block node — by spec, its contents are opaque
-// to the parser and never become `image` nodes. This regex is only ever run
-// against the isolated text of one such already-delimited `html` node (never
-// the whole document), to recover the image references the parser
-// intentionally didn't descend into.
-const IMAGE_MARKDOWN_RE = /!\[([^\]]*)\]\(\s*(<[^>\s]+>|[^\s)]+)(?:\s+"([^"]*)")?\s*\)/g;
-
-function unwrapAngleBrackets(raw: string): string {
-  return raw.startsWith('<') && raw.endsWith('>') ? raw.slice(1, -1) : raw;
-}
-
 /**
- * Walk `markdown` with a real markdown parser (mdast, the same AST already
- * used elsewhere in this codebase for Patreon's JSON→Markdown conversion)
- * and collect every image reference whose URL isn't already one of our own
- * proxy URLs — both proper `image` nodes, and image markdown embedded inside
- * raw `html` nodes (see above). Each ref carries the exact byte offsets of
- * its source span, which lets callers patch just the URL text in place
- * afterwards instead of re-serializing the whole document.
+ * Return the stable form used to identify an image. Signed URL query
+ * parameters are deliberately excluded because they can change while still
+ * pointing at the same image.
  */
-function findImageRefs(markdown: string, collectionId: string, postId: string): ImageRef[] {
-  const prefix = proxyUrlPrefix(collectionId, postId);
-  const tree = fromMarkdown(markdown);
-  const refs: ImageRef[] = [];
+export function canonicalImageUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.search = '';
+  return parsed.toString();
+}
 
-  visit(tree, (node) => {
-    if (node.type === 'image') {
-      const image = node as Image;
-      if (image.url && image.position && !image.url.startsWith(prefix)) {
-        refs.push({
-          url: image.url,
-          start: image.position.start.offset!,
-          end: image.position.end.offset!,
-        });
+/** Hash only the stable, query-free URL rather than expiring URL parameters. */
+export function imageUrlHash(url: string): string {
+  return createHash('sha256').update(canonicalImageUrl(url)).digest('hex');
+}
+
+interface ImageAsset {
+  hash: string;
+  urls: string[];
+}
+
+function collectImageAssets(tree: Root): Map<string, ImageAsset> {
+  const assets = new Map<string, ImageAsset>();
+
+  visit(tree, 'image', (image: Image) => {
+    if (!image.url || isProxyUrl(image.url)) return;
+
+    try {
+      const hash = imageUrlHash(image.url);
+      const asset = assets.get(hash);
+      if (asset) {
+        if (!asset.urls.includes(image.url)) asset.urls.push(image.url);
+      } else {
+        assets.set(hash, { hash, urls: [image.url] });
       }
-      return;
-    }
-
-    if (node.type === 'html') {
-      const html = node as Html;
-      if (!html.position) return;
-      const baseOffset = html.position.start.offset!;
-
-      for (const match of html.value.matchAll(IMAGE_MARKDOWN_RE)) {
-        const url = unwrapAngleBrackets(match[2]!);
-        if (url.startsWith(prefix)) continue;
-        const start = baseOffset + match.index!;
-        refs.push({ url, start, end: start + match[0].length });
-      }
+    } catch {
+      // Relative and otherwise invalid remote URLs cannot be downloaded.
     }
   });
 
-  return refs;
+  return assets;
+}
+
+async function downloadFirstAvailable(
+  urls: string[],
+): Promise<{ buffer: Buffer; contentType: string | null }> {
+  let lastError: unknown;
+
+  for (const url of urls) {
+    try {
+      return await downloadImage(url);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
 }
 
 /**
@@ -199,62 +207,44 @@ export async function rewriteMarkdownImages(
   ctx: { collectionId: string; postId: string },
 ): Promise<string> {
   const { collectionId, postId } = ctx;
-  const imageRefs = findImageRefs(markdown, collectionId, postId);
-  if (imageRefs.length === 0) return markdown;
+  const tree = fromMarkdown(markdown);
+  const assets = collectImageAssets(tree);
+  if (assets.size === 0) return markdown;
 
   const client = getS3Client(s3);
-  const uniqueUrls = Array.from(new Set(imageRefs.map((ref) => ref.url)));
-  const replacements = new Map<string, string>();
+  const proxyUrlByHash = new Map<string, string>();
 
   await Promise.all(
-    uniqueUrls.map(async (url) => {
+    Array.from(assets.values(), async (asset) => {
       try {
-        const { buffer, contentType } = await downloadImage(url);
-        const ext = extensionFromContentType(contentType, url);
-        const hash = createHash('sha256').update(buffer).digest('hex').slice(0, 16);
-        const imgName = `${hash}${ext}`;
-        const key = buildImageKey(s3, collectionId, postId, imgName);
+        const { buffer, contentType } = await downloadFirstAvailable(asset.urls);
+        const imageKey = `${asset.hash}${imageExtension(contentType, asset.urls[0]!)}`;
+        const key = buildImageKey(s3, collectionId, imageKey);
 
-        await uploadIfMissing(client, s3.bucket, key, buffer, contentType ?? 'application/octet-stream');
+        await uploadIfMissing(client, s3.bucket, key, buffer, normalizeContentType(contentType));
 
-        replacements.set(url, buildProxyUrl(collectionId, postId, imgName));
+        proxyUrlByHash.set(asset.hash, buildProxyUrl(collectionId, postId, imageKey));
       } catch (error) {
-        console.warn(`[image-assets] Failed to rewrite image for post ${collectionId}/${postId}: ${url}`, error);
+        console.warn(
+          `[image-assets] Failed to rewrite image for post ${collectionId}/${postId}: ${asset.urls.join(', ')}`,
+          error,
+        );
       }
     }),
   );
 
-  if (replacements.size === 0) return markdown;
+  if (proxyUrlByHash.size === 0) return markdown;
 
-  // Patch each image ref's URL in place at its exact source offset,
-  // back-to-front so earlier offsets stay valid as replacement lengths
-  // differ from the original. Only the URL substring within each ref's own
-  // span is touched — nothing else in the document is re-serialized, so
-  // formatting elsewhere is guaranteed untouched.
-  const edits = imageRefs
-    .map((ref) => {
-      const newUrl = replacements.get(ref.url);
-      if (!newUrl) return null;
+  visit(tree, 'image', (image: Image) => {
+    if (!image.url || isProxyUrl(image.url)) return;
 
-      const original = markdown.slice(ref.start, ref.end);
-      const patched = original.replace(ref.url, newUrl);
+    try {
+      const proxyUrl = proxyUrlByHash.get(imageUrlHash(image.url));
+      if (proxyUrl) image.url = proxyUrl;
+    } catch {
+      // Leave invalid URLs untouched.
+    }
+  });
 
-      if (patched === original) {
-        console.warn(
-          `[image-assets] Could not locate URL "${ref.url}" within its own ref span for post ${collectionId}/${postId} — leaving untouched`,
-        );
-        return null;
-      }
-
-      return { start: ref.start, end: ref.end, text: patched };
-    })
-    .filter((edit): edit is { start: number; end: number; text: string } => edit !== null)
-    .sort((a, b) => b.start - a.start);
-
-  let result = markdown;
-  for (const edit of edits) {
-    result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
-  }
-
-  return result;
+  return toMarkdown(tree);
 }

@@ -1,6 +1,10 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { loadConfig } from '~~/server/utils/config';
-import { buildImageKey, getS3Client } from '~~/server/utils/image-assets';
+import {
+  buildImageKey,
+  buildLegacyImageKey,
+  getS3Client,
+} from '~~/server/utils/image-assets';
 
 function isSafeImageName(name: string): boolean {
   return name.length > 0 && !name.includes('/') && !name.includes('..');
@@ -34,18 +38,28 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const key = buildImageKey(config.s3, collectionId, postId, img);
   const client = getS3Client(config.s3);
+  const keys = [
+    buildImageKey(config.s3, collectionId, img),
+    buildLegacyImageKey(config.s3, collectionId, postId, img),
+  ];
 
   let result;
-  try {
-    result = await client.send(new GetObjectCommand({ Bucket: config.s3.bucket, Key: key }));
-  } catch (error: any) {
-    if (error?.name === 'NoSuchKey' || error?.$metadata?.httpStatusCode === 404) {
-      throw createError({ statusCode: 404, message: 'Image not found' });
+  for (const key of keys) {
+    try {
+      result = await client.send(new GetObjectCommand({ Bucket: config.s3.bucket, Key: key }));
+      break;
+    } catch (error: any) {
+      if (error?.name === 'NoSuchKey' || error?.$metadata?.httpStatusCode === 404) {
+        continue;
+      }
+      console.error(`Error fetching proxied image ${key}:`, error);
+      throw createError({ statusCode: 500, message: 'Failed to fetch image' });
     }
-    console.error(`Error fetching proxied image ${key}:`, error);
-    throw createError({ statusCode: 500, message: 'Failed to fetch image' });
+  }
+
+  if (!result) {
+    throw createError({ statusCode: 404, message: 'Image not found' });
   }
 
   const bytes = await result.Body?.transformToByteArray();
