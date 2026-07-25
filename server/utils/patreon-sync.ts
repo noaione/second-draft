@@ -1,10 +1,31 @@
 import TurndownService from 'turndown';
-import type { CollectionMetadata, PatreonPostsListResponse, PostMetadata } from '../../types/config';
+import type { CollectionMetadata, PatreonPostsListResponse, PostMetadata, S3AssetsConfig } from '../../types/config';
 import { loadConfig } from './config';
 import { saveCollectionMetadata, getDownloadedPosts, savePost } from './content-store';
 import { PatreonClient } from './patreon-client';
 import { patreonJsonToMarkdown } from './patreon-json-parser';
 import { sendDiscordNotification, type SyncCollectionResult } from './discord-notifier';
+import { rewriteMarkdownImages } from './image-assets';
+
+/**
+ * Rewrite images to the configured S3 bucket, if configured. Never throws —
+ * a failed rewrite falls back to the original markdown so one bad image
+ * doesn't block saving the post.
+ */
+async function rewriteImagesIfConfigured(
+  markdown: string,
+  s3: S3AssetsConfig | undefined,
+  collectionId: string,
+  postId: string,
+): Promise<string> {
+  if (!s3?.enabled) return markdown;
+  try {
+    return await rewriteMarkdownImages(markdown, s3, { collectionId, postId });
+  } catch (error) {
+    console.error(`Image rewrite failed for post ${postId}:`, error);
+    return markdown;
+  }
+}
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -42,6 +63,7 @@ async function syncCollection(
   collectionName: string,
   campaignId: string,
   filter: { collectionId: string } | { tag: string },
+  s3?: S3AssetsConfig,
 ): Promise<SyncCollectionResult> {
   console.log(`\n🔄 Syncing collection: ${collectionName} (${collectionId})`);
 
@@ -85,8 +107,11 @@ async function syncCollection(
       // Create post metadata
       const metadata = patreonToMeta(post, collectionId, collectionName, creatorName);
 
+      // Rewrite images to S3, if configured
+      const finalMarkdown = await rewriteImagesIfConfigured(markdownContent, s3, collectionId, postId);
+
       // Save post
-      await savePost(collectionId, postId, metadata, markdownContent);
+      await savePost(collectionId, postId, metadata, finalMarkdown);
       downloadedCount++;
       collectedMeta.push(metadata);
 
@@ -163,8 +188,11 @@ export async function syncSinglePatreonPost(rootDir: string, postId: string, col
   // Create post metadata
   const metadata = patreonToMeta(post, collectionId, collection.name, creatorName);
 
+  // Rewrite images to S3, if configured
+  const finalMarkdown = await rewriteImagesIfConfigured(markdownContent, config.s3, collectionId, postId);
+
   // Save post
-  await savePost(collectionId, postId, metadata, markdownContent);
+  await savePost(collectionId, postId, metadata, finalMarkdown);
   const collectionMeta: CollectionMetadata = {
     id: collectionId,
     name: collection.name,
@@ -232,7 +260,9 @@ export async function syncPostsByIds(
 
       const metadata = patreonToMeta(post, collectionId, collection.name, creatorName);
 
-      await savePost(collectionId, postId, metadata, markdownContent);
+      const finalMarkdown = await rewriteImagesIfConfigured(markdownContent, config.s3, collectionId, postId);
+
+      await savePost(collectionId, postId, metadata, finalMarkdown);
       downloadedCount++;
       newMeta.push(metadata);
 
@@ -315,6 +345,7 @@ export async function syncPatreon(rootDir: string) {
         collection.name,
         collection.campaignId,
         filter,
+        config.s3,
       );
       syncResults.push(result);
     }

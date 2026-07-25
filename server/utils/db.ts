@@ -1,7 +1,7 @@
-import { createDatabase, Primitive } from "db0";
+import { createDatabase, type Primitive } from "db0";
 import nodeSqlite3Connector from "db0/connectors/sqlite3";
-import { MinimarkTree } from "minimark";
-import { PostMetadata } from "~~/types/config";
+import type { MinimarkTree } from "minimark";
+import type { PostMetadata } from "~~/types/config";
 
 const tableName = 'seconddraft_posts';
 
@@ -48,6 +48,13 @@ export async function getStoredPosts(db: DatabaseThing, collectionId: string, po
     console.error(`Error querying stored posts for collectionId ${collectionId} and postId ${postId}:`, error);
     return null;
   }
+}
+
+export async function deleteStoredPost(db: DatabaseThing, collectionId: string, postId: string): Promise<void> {
+  await db.sql`
+    DELETE FROM {${tableName}}
+    WHERE collectionId = ${collectionId} AND postId = ${postId}
+  `;
 }
 
 export async function storeRenderedMarkdown(db: DatabaseThing, result: Omit<RenderedMarkdownResult, 'id'>, path: string) {

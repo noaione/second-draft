@@ -30,6 +30,24 @@ export interface WattpadConfig {
   collections: WattpadCollection[];
 }
 
+/**
+ * S3-compatible bucket used to re-host images referenced in synced markdown.
+ * Optional — when absent, images are left pointing at their original remote URLs.
+ */
+export interface S3AssetsConfig {
+  enabled?: boolean;
+  /** S3-compatible endpoint, e.g. "https://s3.us-east-1.wasabisys.com" (Wasabi), an R2/MinIO/B2 endpoint, etc. */
+  endpoint: string;
+  region?: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  /** Optional key prefix inside the bucket */
+  prefix?: string;
+  /** Needed for MinIO/R2; Wasabi/AWS work with either setting. Defaults to true. */
+  forcePathStyle?: boolean;
+}
+
 export interface AppConfig {
   password: string;
   /** Independent, optional source blocks — either, both, or neither may be configured */
@@ -39,6 +57,8 @@ export interface AppConfig {
   discord?: {
     webhookUrl: string;
   };
+  /** Optional S3 bucket for re-hosting images found in synced markdown, served via the img-proxy API route */
+  s3?: S3AssetsConfig;
 }
 
 /**

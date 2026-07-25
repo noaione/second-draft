@@ -1,10 +1,31 @@
-import type { CollectionMetadata, PostMetadata } from '../../types/config';
+import type { CollectionMetadata, PostMetadata, S3AssetsConfig } from '../../types/config';
 import type { WattpadStoryResponse } from '../../types/wattpad';
 import { loadConfig } from './config';
 import { saveCollectionMetadata, getDownloadedPosts, savePost } from './content-store';
 import { WattpadClient } from './wattpad-client';
 import { wattpadHtmlToMarkdown } from './wattpad-html-to-markdown';
 import { sendDiscordNotification, type SyncCollectionResult } from './discord-notifier';
+import { rewriteMarkdownImages } from './image-assets';
+
+/**
+ * Rewrite images to the configured S3 bucket, if configured. Never throws —
+ * a failed rewrite falls back to the original markdown so one bad image
+ * doesn't block saving the post.
+ */
+async function rewriteImagesIfConfigured(
+  markdown: string,
+  s3: S3AssetsConfig | undefined,
+  collectionId: string,
+  postId: string,
+): Promise<string> {
+  if (!s3?.enabled) return markdown;
+  try {
+    return await rewriteMarkdownImages(markdown, s3, { collectionId, postId });
+  } catch (error) {
+    console.error(`Image rewrite failed for post ${postId}:`, error);
+    return markdown;
+  }
+}
 
 function wattpadToMeta(
   part: WattpadStoryResponse['parts'][0],
@@ -31,6 +52,7 @@ async function syncCollection(
   client: WattpadClient,
   storyId: string,
   collectionName: string,
+  s3?: S3AssetsConfig,
 ): Promise<SyncCollectionResult> {
   const folderId = `wp-${storyId}`;
 
@@ -58,7 +80,9 @@ async function syncCollection(
 
       const metadata = wattpadToMeta(part, folderId, collectionName, authorName);
 
-      await savePost(folderId, String(part.id), metadata, markdownContent);
+      const finalMarkdown = await rewriteImagesIfConfigured(markdownContent, s3, folderId, String(part.id));
+
+      await savePost(folderId, String(part.id), metadata, finalMarkdown);
       downloadedCount++;
 
       console.log(`   ✅ Saved: ${part.title}`);
@@ -123,7 +147,7 @@ export async function syncWattpad(rootDir: string) {
         console.log(`   ⚠️ Skipping completed collection: ${collection.name} (${collection.id})`);
         continue;
       }
-      const result = await syncCollection(client, collection.id, collection.name);
+      const result = await syncCollection(client, collection.id, collection.name, config.s3);
       syncResults.push(result);
     }
 

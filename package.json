@@ -8,9 +8,11 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "sync:patreon": "bun run ./scripts/sync-data.ts",
-    "sync:posts": "bun run ./scripts/sync-posts.ts"
+    "sync:posts": "bun run ./scripts/sync-posts.ts",
+    "backfill:images": "bun run ./scripts/backfill-images.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1095.0",
     "@iconify-json/lucide": "1.2.118",
     "@nuxt/fonts": "0.14.0",
     "@nuxt/ui": "4.10.0",
@@ -21,6 +23,7 @@
     "bcrypt": "6.0.0",
     "db0": "0.3.4",
     "iron-session": "8.0.4",
+    "mdast-util-from-markdown": "^2.0.3",
     "mdast-util-gfm": "3.1.0",
     "mdast-util-to-markdown": "2.1.2",
     "minimark": "1.0.0",

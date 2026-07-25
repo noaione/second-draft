@@ -1,8 +1,5 @@
 import { createShikiHighlighter, parseMarkdown, rehypeHighlight } from "@nuxtjs/mdc/runtime";
 import materialThemePaleNight from 'shiki/themes/material-theme-palenight.mjs';
-import { createDatabase, Primitive } from "db0";
-import sqlite from "db0/connectors/sqlite3";
-import { hash }  from 'ohash';
 
 import bash from '@shikijs/langs/bash';
 import html from '@shikijs/langs/html';
@@ -12,11 +9,11 @@ import yml from '@shikijs/langs/yml';
 import scss from '@shikijs/langs/scss';
 import ts from '@shikijs/langs/ts';
 import typescript from '@shikijs/langs/typescript';
-import { createOnigurumaEngine, Highlighter } from "shiki";
+import { createOnigurumaEngine, type Highlighter } from "shiki";
 
 import { fromHast } from "minimark/hast";
-import { PostMetadata } from "~~/types/config";
-import { RenderedMarkdownResult } from "./db";
+import type { PostMetadata } from "~~/types/config";
+import type { RenderedMarkdownResult } from "./db";
 
 type HighlightedNode = { type: 'element', properties?: Record<string, string | undefined> }
 
@@ -82,7 +79,7 @@ export async function renderMarkdownToHtml(markdown: string): Promise<Omit<Rende
     rehype: {
       plugins: {},
     }
-  })
+  });
 
   const comprssedBody = fromHast(parsed.body);
   const dataContent = parsed.data as PostMetadata & { description: string };

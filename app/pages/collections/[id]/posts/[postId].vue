@@ -135,13 +135,26 @@
         <!-- Post Header -->
         <template #header>
           <div class="space-y-4">
-            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <UBadge color="neutral" variant="subtle">
-                Chapter {{ currentIndex + 1 }}
-              </UBadge>
-              <span v-if="(post as any).publishedAt">
-                {{ formatDate((post as any).publishedAt) }}
-              </span>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <UBadge color="neutral" variant="subtle">
+                  Chapter {{ currentIndex + 1 }}
+                </UBadge>
+                <span v-if="(post as any).publishedAt">
+                  {{ formatDate((post as any).publishedAt) }}
+                </span>
+              </div>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                :icon="refreshIcon"
+                size="xs"
+                square
+                :loading="refreshing"
+                :disabled="refreshing"
+                title="Force re-render from source markdown"
+                @click="refreshPost"
+              />
             </div>
             <h1 class="text-4xl font-bold text-gray-900 dark:text-white">
               {{ post.title }}
@@ -297,6 +310,29 @@ const nextPost = computed(() => {
   }
   return null;
 });
+
+const refreshing = ref(false);
+const refreshIcon = ref('lucide:refresh-cw');
+
+async function refreshPost() {
+  if (refreshing.value) return;
+  refreshing.value = true;
+  try {
+    const fresh = await $fetch<PostMetadata>(`/api/collections/${collectionId}/posts/${postId}/refresh`, {
+      method: 'POST',
+    });
+    post.value = fresh;
+    refreshIcon.value = 'lucide:check';
+  } catch (error) {
+    console.error('Failed to force re-render post:', error);
+    refreshIcon.value = 'lucide:alert-circle';
+  } finally {
+    refreshing.value = false;
+    setTimeout(() => {
+      refreshIcon.value = 'lucide:refresh-cw';
+    }, 1500);
+  }
+}
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-US', {

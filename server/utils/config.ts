@@ -27,6 +27,17 @@ const wattpadConfigSchema = z.object({
   collections: z.array(wattpadCollectionSchema),
 });
 
+const s3ConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  endpoint: z.string(),
+  region: z.string().optional(),
+  bucket: z.string(),
+  accessKeyId: z.string(),
+  secretAccessKey: z.string(),
+  prefix: z.string().optional(),
+  forcePathStyle: z.boolean().optional(),
+});
+
 const appConfigSchema = z
   .object({
     password: z.string(),
@@ -37,6 +48,7 @@ const appConfigSchema = z
         webhookUrl: z.string(),
       })
       .optional(),
+    s3: s3ConfigSchema.optional(),
   })
   .superRefine((cfg, ctx) => {
     if (!cfg.patreon && !cfg.wattpad) {

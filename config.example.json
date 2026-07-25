@@ -24,5 +24,15 @@
   },
   "discord": {
     "webhookUrl": "https://discord.com/api/webhooks/your-webhook-id/your-webhook-token"
+  },
+  "s3": {
+    "enabled": false,
+    "endpoint": "https://s3.us-east-1.wasabisys.com",
+    "region": "us-east-1",
+    "bucket": "your-bucket-name",
+    "accessKeyId": "your-access-key-id",
+    "secretAccessKey": "your-secret-access-key",
+    "prefix": "second-draft",
+    "forcePathStyle": false
   }
 }
