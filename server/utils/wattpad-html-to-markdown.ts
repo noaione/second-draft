@@ -41,7 +41,7 @@ turndownService.addRule('styledInline', {
   replacement: (content: string, node: any) => {
     const tag = node.nodeName.toLowerCase();
     const style = node.getAttribute('style');
-    return `<${tag} style="${style}">\n\n${content.trim()}\n\n</${tag}>\n`;
+    return `::styled-html{tag="${tag}" style="${style}"}\n${content}\n::\n`;
   },
 });
 

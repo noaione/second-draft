@@ -133,9 +133,17 @@ export default defineNuxtConfig({
       // map: {
       //   a: 'A',
       // }
+      map: {
+        'styled-html': 'StyledHtml'
+      }
     },
     headings: {
       anchorLinks: false,
     }
+  },
+  components: {
+    global: true,
+    // @ts-expect-error ignore
+    path: './components/prose',
   },
 })
