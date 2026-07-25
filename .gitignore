@@ -33,3 +33,5 @@ content/**/*.json
 pnpm-lock.yaml
 
 quick-sync.py
+
+/databases

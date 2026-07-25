@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   const runtimeConfig = useRuntimeConfig(event);
   const postPath = join(runtimeConfig.rootDir, 'content', collectionId, 'posts', `${postId}.md`);
-  const dbPath = join(runtimeConfig.rootDir, '.output', 'server', 'dynamic-content.sqlite');
+  const dbPath = join(runtimeConfig.rootDir, 'databases', 'dynamic-content.sqlite');
 
   let markdownContent: string;
   try {

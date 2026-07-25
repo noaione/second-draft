@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
   const postId = getRouterParam(event, 'postId');
   const runtimeConfig = useRuntimeConfig(event);
 
-  const dbPath = join(runtimeConfig.rootDir, '.output', 'server', 'dynamic-content.sqlite');
+  const dbPath = join(runtimeConfig.rootDir, 'databases', 'dynamic-content.sqlite');
 
   if (!collectionId) {
     throw createError({
