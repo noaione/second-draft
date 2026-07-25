@@ -28,8 +28,13 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Sort by name
-    collections.sort((a, b) => a.id - b.id);
+    // Sort by author + name
+    collections.sort((a, b) => {
+      if (a.author && b.author) {
+        return a.author.localeCompare(b.author);
+      }
+      return a.name.localeCompare(b.name);
+    });
 
     return collections;
   } catch (error) {
