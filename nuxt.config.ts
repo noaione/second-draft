@@ -134,6 +134,7 @@ export default defineNuxtConfig({
       //   a: 'A',
       // }
       map: {
+        a: 'A',
         'styled-html': 'StyledHtml'
       }
     },
