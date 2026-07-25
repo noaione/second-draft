@@ -31,6 +31,40 @@ const cachedCounter = useLocalStorage<CachedCounter[]>('cached-counters', []);
 const firstLoad = ref(true);
 const collections = ref<CollectionMetadata[]>([]);
 
+const UNKNOWN_AUTHOR = 'Unknown author';
+
+const displayAuthor = (author?: string) => {
+  const value = author?.trim();
+  if (!value || /^unknown (?:author|creator)$/i.test(value)) {
+    return UNKNOWN_AUTHOR;
+  }
+  return value;
+};
+
+const collectionsByAuthor = computed(() => {
+  const grouped = new Map<string, CollectionMetadata[]>();
+
+  for (const collection of collections.value) {
+    const author = displayAuthor(collection.author);
+    const authorCollections = grouped.get(author);
+    if (authorCollections) {
+      authorCollections.push(collection);
+    } else {
+      grouped.set(author, [collection]);
+    }
+  }
+
+  return Array.from(grouped, ([author, authorCollections]) => ({
+    author,
+    collections: authorCollections.sort((a, b) => a.name.localeCompare(b.name)),
+  })).sort((a, b) => {
+    if (a.author === UNKNOWN_AUTHOR && b.author === UNKNOWN_AUTHOR) return 0;
+    if (a.author === UNKNOWN_AUTHOR) return 1;
+    if (b.author === UNKNOWN_AUTHOR) return -1;
+    return a.author.localeCompare(b.author);
+  });
+});
+
 onMounted(async () => {
   try {
     const response = await $fetch<CollectionMetadata[]>('/api/collections');
@@ -143,55 +177,84 @@ const logout = async () => {
           </div>
         </UCard>
 
-        <!-- Collections Grid -->
-        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
-          <UCard
-            v-for="collection in collections"
-            :key="collection.id"
-            class="hover:shadow-xl transition-shadow cursor-pointer"
-            @click="navigateTo(`/collections/${collection.id}`)"
+        <!-- Collections grouped by author -->
+        <div v-else class="space-y-10">
+          <UCollapsible
+            v-for="group in collectionsByAuthor"
+            :key="group.author"
+            as="section"
+            default-open
+            :unmount-on-hide="false"
           >
-            <template #header>
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    {{ collection.name }}
-                  </h3>
-                </div>
-                <UIcon name="lucide:chevron-right" class="w-5 h-5 text-gray-400" />
-              </div>
-            </template>
-
-            <div class="space-y-3">
-              <div v-if="collection.author" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <UIcon name="lucide:circle-user-round" />
-                <span>{{ collection.author }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <UIcon name="lucide:file" />
-                <span>{{ collection.postCount }} chapters</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <UIcon name="lucide:clock" />
-                <span>last synced {{ formatDate(collection.lastSync) }}</span>
-              </div>
-              <UBadge v-if="collection.hasNew && collection.hasNew !== ResultNew.None" :color="collection.hasNew === ResultNew.Series ? 'success' : 'info'" variant="subtle">
-                {{ collection.hasNew === ResultNew.Chapter ? 'new chapter' : 'new series' }}
-              </UBadge>
-            </div>
-
-            <template #footer>
-              <UButton
-                :to="`/collections/${collection.id}`"
-                block
-                color="neutral"
-                variant="ghost"
-                trailing-icon="lucide:arrow-right"
+            <template #default="{ open }">
+              <button
+                type="button"
+                class="group flex w-full items-center gap-3 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
               >
-                view collection
-              </UButton>
+                <UIcon name="lucide:circle-user-round" class="size-6 text-gray-500 dark:text-gray-400" />
+                <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {{ group.author }}
+                </h3>
+                <UBadge color="neutral" variant="subtle">
+                  {{ group.collections.length }}
+                  {{ group.collections.length === 1 ? 'collection' : 'collections' }}
+                </UBadge>
+                <UIcon
+                  name="lucide:chevron-down"
+                  class="ml-auto size-5 text-gray-400 transition-transform duration-200 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                  :class="{ '-rotate-90': !open }"
+                />
+              </button>
             </template>
-          </UCard>
+
+            <template #content>
+              <div class="grid grid-cols-1 gap-6 pt-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
+                <UCard
+                  v-for="collection in group.collections"
+                  :key="collection.id"
+                  class="hover:shadow-xl transition-shadow cursor-pointer"
+                  @click="navigateTo(`/collections/${collection.id}`)"
+                >
+                  <template #header>
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                          {{ collection.name }}
+                        </h4>
+                      </div>
+                      <UIcon name="lucide:chevron-right" class="w-5 h-5 text-gray-400" />
+                    </div>
+                  </template>
+
+                  <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <UIcon name="lucide:file" />
+                      <span>{{ collection.postCount }} chapters</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <UIcon name="lucide:clock" />
+                      <span>last synced {{ formatDate(collection.lastSync) }}</span>
+                    </div>
+                    <UBadge v-if="collection.hasNew && collection.hasNew !== ResultNew.None" :color="collection.hasNew === ResultNew.Series ? 'success' : 'info'" variant="subtle">
+                      {{ collection.hasNew === ResultNew.Chapter ? 'new chapter' : 'new series' }}
+                    </UBadge>
+                  </div>
+
+                  <template #footer>
+                    <UButton
+                      :to="`/collections/${collection.id}`"
+                      block
+                      color="neutral"
+                      variant="ghost"
+                      trailing-icon="lucide:arrow-right"
+                    >
+                      view collection
+                    </UButton>
+                  </template>
+                </UCard>
+              </div>
+            </template>
+          </UCollapsible>
         </div>
       </div>
     </main>
