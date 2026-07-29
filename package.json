@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "sync:patreon": "bun run ./scripts/sync-data.ts",
     "sync:posts": "bun run ./scripts/sync-posts.ts",
-    "backfill:images": "bun run ./scripts/backfill-images.ts"
+    "backfill:images": "bun run ./scripts/backfill-images.ts",
+    "wattpad:discover": "bun run ./scripts/wattpad-discover.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1095.0",
