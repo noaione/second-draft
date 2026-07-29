@@ -4,6 +4,9 @@ export type ReadingLetterSpacing = 'normal' | 'wide';
 export type ReadingTextAlign = 'left' | 'justify';
 export type ReadingMeasure = 'narrow' | 'normal' | 'wide';
 export type ReadingTheme = 'system' | 'light' | 'dark' | 'sepia' | 'high-contrast';
+export type ReadingSpeed = 'snail' | 'slower' | 'slow' | 'normal' | 'fast' | 'faster' | 'turbo' | 'crazy-style';
+
+export const BASE_WPM = 220;
 
 export interface ReadingPreferences {
   fontScale: number;
@@ -12,6 +15,7 @@ export interface ReadingPreferences {
   letterSpacing: ReadingLetterSpacing;
   textAlign: ReadingTextAlign;
   measure: ReadingMeasure;
+  speed: ReadingSpeed;
   theme: ReadingTheme;
 }
 
@@ -22,6 +26,7 @@ const DEFAULT_PREFERENCES: ReadingPreferences = {
   letterSpacing: 'normal',
   textAlign: 'left',
   measure: 'normal',
+  speed: 'fast',
   theme: 'system',
 };
 
@@ -61,6 +66,18 @@ export const THEME_OPTIONS: { label: string; value: ReadingTheme; swatchBg: stri
 export const TEXT_ALIGN_OPTIONS: { label: string; value: ReadingTextAlign; textAlign: string }[] = [
   { label: 'Left', value: 'left', textAlign: 'left' },
   { label: 'Justify', value: 'justify', textAlign: 'justify' },
+];
+
+// Multiplier from base speed (220wpm)
+export const READING_SPEED_OPTIONS: { label: string; value: ReadingSpeed; speed: number }[] = [
+  { label: 'Snail pace', value: 'snail', speed: 0.25 },
+  { label: 'Page-turner', value: 'slower', speed: 0.5 },
+  { label: 'Slow', value: 'slow', speed: 0.75 },
+  { label: 'Normal', value: 'normal', speed: 1 },
+  { label: 'Fast', value: 'fast', speed: 1.5 },
+  { label: 'Speed reader', value: 'faster', speed: 2 },
+  { label: 'Lightning', value: 'turbo', speed: 3 },
+  { label: 'Demon', value: 'crazy-style', speed: 4 }
 ];
 
 // Nuxt UI's own components (buttons, popovers, selects, badges) follow the
@@ -119,6 +136,11 @@ export function useReadingPreferences() {
     };
   });
 
+  const wpmRate = computed(() => {
+    const multiplier = READING_SPEED_OPTIONS.find(o => o.value === preferences.value.speed)?.speed ?? 1;
+    return Math.round(BASE_WPM * multiplier)
+  })
+
   function adjustFontScale(delta: number) {
     const next = Math.round((preferences.value.fontScale + delta) * 1000) / 1000;
     preferences.value.fontScale = Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, next));
@@ -133,6 +155,7 @@ export function useReadingPreferences() {
     themeStyle,
     fontFamilyClass,
     proseStyle,
+    wpmRate,
     adjustFontScale,
     resetPreferences,
     fontScaleStep: FONT_SCALE_STEP,

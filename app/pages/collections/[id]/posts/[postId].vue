@@ -148,6 +148,14 @@
                     />
                   </UFormField>
 
+                  <UFormField label="Reading speed">
+                    <USelect
+                      v-model="preferences.speed"
+                      :items="READING_SPEED_OPTIONS.map((o) => ({ label: `${o.label} (${BASE_WPM * o.speed} wpm)`, value: o.value }))"
+                      class="w-full"
+                    />
+                  </UFormField>
+
                   <USwitch v-model="isWideLetterSpacing" label="Wide letter spacing" />
 
                   <UFormField label="Theme">
@@ -384,6 +392,7 @@ const {
   themeStyle,
   fontFamilyClass,
   proseStyle,
+  wpmRate,
   adjustFontScale,
   resetPreferences,
   fontScaleStep,
@@ -447,7 +456,7 @@ const wordCountLabel = computed(() => {
   collectHastText(computedBody.value, textChunks);
   const words = textChunks.join(' ').trim().split(/\s+/).filter(Boolean).length;
   if (words === 0) return '';
-  const minutes = Math.max(1, Math.round(words / 220));
+  const minutes = Math.max(1, Math.round(words / wpmRate.value));
   return `${words.toLocaleString()} words · ~${minutes} min read`;
 });
 
