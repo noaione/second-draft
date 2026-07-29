@@ -147,6 +147,7 @@
               <UButton
                 variant="ghost"
                 color="neutral"
+                class="cursor-pointer"
                 :icon="refreshIcon"
                 size="xs"
                 square
@@ -283,13 +284,10 @@ const computedBody = computed(() => {
   return toHast(post.value.body) as MDCRoot;
 });
 
-// Sort posts by postId (numeric) - ascending order for chapters
-const sortedPosts = computed(() => {
-  if (!allPosts.value) return [];
-  return [...allPosts.value].sort((a, b) => {
-    return parseInt(a.postId) - parseInt(b.postId);
-  });
-});
+// Use the posts list position exactly as returned by the API — chapter
+// IDs don't necessarily match reading order (Wattpad authors can reorder
+// their table of contents), so never re-sort by postId here.
+const sortedPosts = computed(() => allPosts.value ?? []);
 
 // Find current post index
 const currentIndex = computed(() => {

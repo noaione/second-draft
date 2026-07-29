@@ -26,21 +26,24 @@ export async function saveCollectionMetadata(
 
   const metadataPath = join(collectionDir, 'index.json');
   // read the data first, then merge the posts together
-  let oldPosts = [];
+  let oldPosts: PostMetadata[] = [];
   if (fsSync.existsSync(metadataPath)) {
     const readData = await fs.readFile(metadataPath, 'utf-8');
     oldPosts = JSON.parse(readData).posts || [];
   }
 
-  // merge data together, prioritizing new posts metadata
-  const mergedPosts = [...oldPosts, ...(metadata.posts ?? [])];
-  // unique set
-  const uniquePosts = new Set(mergedPosts.map((post) => post.postId));
+  // `metadata.posts` (the caller-provided list) reflects the order the
+  // source API returned on this run — for a full collection sync that's
+  // the complete, authoritative list, so it always wins outright. Any
+  // previously known posts missing from it (e.g. a partial backfill) are
+  // appended after, keeping their prior relative order. Never re-sort by
+  // postId here — chapter IDs don't necessarily match reading order
+  // (Wattpad authors can reorder their table of contents after publishing).
+  const newPosts = metadata.posts ?? [];
+  const newIds = new Set(newPosts.map((post) => post.postId));
+  const leftoverOld = oldPosts.filter((post) => !newIds.has(post.postId));
 
-  metadata.posts = Array.from(uniquePosts).map((postId) => {
-    return mergedPosts.find((post) => post.postId === postId)!;
-  });
-  metadata.posts.sort((ab, bc) => ab.postId.localeCompare(bc.postId));
+  metadata.posts = [...newPosts, ...leftoverOld];
   metadata.postCount = metadata.posts.length;
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }

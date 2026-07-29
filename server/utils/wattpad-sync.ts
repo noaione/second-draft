@@ -71,6 +71,7 @@ async function syncCollection(
   console.log(`   Missing parts to download: ${missingParts.length}`);
 
   let downloadedCount = 0;
+  const failedPartIds = new Set<string>();
   for (const part of missingParts) {
     try {
       console.log(`   📥 Downloading: ${part.title} (${part.id})`);
@@ -88,10 +89,14 @@ async function syncCollection(
       console.log(`   ✅ Saved: ${part.title}`);
     } catch (error) {
       console.error(`   ❌ Error downloading part ${part.id}:`, error);
+      // Never index a chapter that failed to save — there's no file behind it.
+      failedPartIds.add(String(part.id));
     }
   }
 
-  const finalizedPosts = story.parts.map((part) => wattpadToMeta(part, folderId, collectionName, authorName));
+  const finalizedPosts = story.parts
+    .filter((part) => !failedPartIds.has(String(part.id)))
+    .map((part) => wattpadToMeta(part, folderId, collectionName, authorName));
 
   const totalPosts = downloadedPosts.size + downloadedCount;
   const metadata: CollectionMetadata = {

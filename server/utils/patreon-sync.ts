@@ -90,7 +90,7 @@ async function syncCollection(
 
   // Download missing posts
   let downloadedCount = 0;
-  const collectedMeta = [];
+  const failedPostIds = new Set<string>();
   for (const post of missingPosts) {
     try {
       const postId = post.id;
@@ -113,15 +113,18 @@ async function syncCollection(
       // Save post
       await savePost(collectionId, postId, metadata, finalMarkdown);
       downloadedCount++;
-      collectedMeta.push(metadata);
 
       console.log(`   ✅ Saved: ${title}`);
     } catch (error) {
       console.error(`   ❌ Error downloading post ${post.id}:`, error);
+      // Never index a post that failed to save — there's no file behind it.
+      failedPostIds.add(post.id);
     }
   }
 
-  const finalizedPosts = posts.map(post => patreonToMeta(post, collectionId, collectionName, creatorName));
+  const finalizedPosts = posts
+    .filter(post => !failedPostIds.has(post.id))
+    .map(post => patreonToMeta(post, collectionId, collectionName, creatorName));
 
   // Update collection metadata
   const totalPosts = downloadedPosts.size + downloadedCount;

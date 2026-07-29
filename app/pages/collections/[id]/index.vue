@@ -33,8 +33,12 @@ const firstLoad = ref(true);
 const collection = ref<CollectionMetadata | null>(null);
 const posts = ref<PostMetadata[]>([]);
 const sortedPosts = ref<PostMetadata[]>([]);
+// Empty `column` means "no explicit sort" — show posts in the order the
+// API returned them (true list position), matching the reader's chapter
+// navigation. Only switches to an explicit column sort when the user picks
+// one via a column header's Asc/Desc dropdown.
 const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'postId',
+  column: '',
   direction: 'asc'
 });
 const search = ref('');
@@ -195,33 +199,39 @@ function onSort(column: { key: string; direction?: 'asc' | 'desc' }) {
 }
 
 watch(search, () => {
-  // Reset sorting when search changes
-  sortBy.value = { column: 'postId', direction: 'asc' };
+  // Reset to list-position order when search changes
+  sortBy.value = { column: '', direction: 'asc' };
 });
 
 watch(posts, () => {
-  // Reset sorting when posts change
-  sortBy.value = { column: 'postId', direction: 'asc' };
+  // Reset to list-position order when posts change
+  sortBy.value = { column: '', direction: 'asc' };
 });
 
 // Set sorted posts when posts updated
 watch([posts, search], ([newPosts, searchData]) => {
   let filtered = toRaw(newPosts);
-  
+
   // Filter by search
   if (searchData.trim().length > 0) {
     const searchLower = searchData.toLowerCase();
-    filtered = filtered.filter(post => 
+    filtered = filtered.filter(post =>
       post.title.toLowerCase().includes(searchLower) ||
       post.postId.includes(searchLower)
     );
+  }
+
+  // No explicit sort chosen — keep the API's list-position order as-is.
+  if (!sortBy.value.column) {
+    sortedPosts.value = filtered;
+    return;
   }
 
   // Sort
   const sortedData = [...filtered].sort((a, b) => {
     let aVal: any;
     let bVal: any;
-    
+
     if (sortBy.value.column === 'postId') {
       aVal = parseInt(a.postId);
       bVal = parseInt(b.postId);
@@ -232,7 +242,7 @@ watch([posts, search], ([newPosts, searchData]) => {
       aVal = (a as any)[sortBy.value.column];
       bVal = (b as any)[sortBy.value.column];
     }
-    
+
     if (sortBy.value.direction === 'asc') {
       return aVal > bVal ? 1 : -1;
     } else {
