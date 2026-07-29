@@ -4,13 +4,27 @@
 
 @theme {
     --font-sans: 'Geist', sans-serif;
+    --font-accessible: 'Atkinson Hyperlegible', sans-serif;
+    --font-literata: 'Literata', serif;
 }
 
 :root {
     --ui-radius: 0rem;
     --ui-primary: black;
+
+    --a11y-bg: #ffffff;
+    --a11y-card-bg: #ffffff;
+    --a11y-text: #18181b;
+    --a11y-muted: #4b5563;
+    --a11y-border: #e5e7eb;
 }
 
 .dark {
     --ui-primary: white;
+
+    --a11y-bg: #000000;
+    --a11y-card-bg: #18181B;
+    --a11y-text: #ffffff;
+    --a11y-muted: #9ca3af;
+    --a11y-border: #1f2937;
 }

@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-white dark:bg-black">
+  <div class="min-h-screen bg-(--a11y-bg)" :style="themeStyle">
     <!-- Top Navigation -->
-    <header class="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+    <header class="sticky top-0 z-50 border-b border-(--a11y-border) bg-(--a11y-bg)">
       <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div class="flex items-center justify-between h-14 sm:h-16 gap-1 sm:gap-2">
           <div class="flex items-center gap-1">
@@ -70,6 +70,115 @@
           </div>
 
           <div class="flex items-center gap-1">
+            <UPopover>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                icon="lucide:case-sensitive"
+                size="sm"
+                square
+                title="Reading display settings"
+                aria-label="Reading display settings"
+              />
+
+              <template #content>
+                <div class="w-72 max-w-[calc(100vw-2rem)] p-4 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h2 class="font-semibold text-sm">Display settings</h2>
+                    <UButton variant="ghost" color="neutral" size="xs" @click="resetPreferences">
+                      Reset
+                    </UButton>
+                  </div>
+
+                  <UFormField label="Text size">
+                    <div class="flex items-center gap-2">
+                      <UButton
+                        icon="lucide:minus"
+                        variant="outline"
+                        color="neutral"
+                        size="xs"
+                        square
+                        :disabled="preferences.fontScale <= fontScaleMin"
+                        aria-label="Decrease text size"
+                        @click="adjustFontScale(-fontScaleStep)"
+                      />
+                      <span class="text-sm tabular-nums w-12 text-center">{{ Math.round(preferences.fontScale * 100) }}%</span>
+                      <UButton
+                        icon="lucide:plus"
+                        variant="outline"
+                        color="neutral"
+                        size="xs"
+                        square
+                        :disabled="preferences.fontScale >= fontScaleMax"
+                        aria-label="Increase text size"
+                        @click="adjustFontScale(fontScaleStep)"
+                      />
+                    </div>
+                  </UFormField>
+
+                  <UFormField label="Font">
+                    <USelect
+                      v-model="preferences.fontFamily"
+                      :items="FONT_FAMILY_OPTIONS.map((o) => ({ label: o.label, value: o.value }))"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <UFormField label="Line height">
+                    <USelect
+                      v-model="preferences.lineHeight"
+                      :items="LINE_HEIGHT_OPTIONS.map((o) => ({ label: o.label, value: o.value }))"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <UFormField label="Content width">
+                    <USelect
+                      v-model="preferences.measure"
+                      :items="MEASURE_OPTIONS.map((o) => ({ label: o.label, value: o.value }))"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <UFormField label="Text alignment">
+                    <USelect
+                      v-model="preferences.textAlign"
+                      :items="TEXT_ALIGN_OPTIONS.map((o) => ({ label: o.label, value: o.value }))"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <USwitch v-model="isWideLetterSpacing" label="Wide letter spacing" />
+
+                  <UFormField label="Theme">
+                    <div class="flex items-center gap-2">
+                      <button
+                        v-for="option in THEME_OPTIONS"
+                        :key="option.value"
+                        type="button"
+                        class="w-7 h-7 rounded-full border-2 flex items-center justify-center cursor-pointer"
+                        :class="[
+                          preferences.theme === option.value ? 'border-primary' : 'border-gray-300 dark:border-gray-600',
+                          option.value === 'high-contrast' ? 'ring-1 ring-inset ring-white/80' : '',
+                        ]"
+                        :style="{ backgroundColor: option.swatchBg }"
+                        :aria-pressed="preferences.theme === option.value"
+                        :aria-label="option.label"
+                        :title="option.label"
+                        @click="preferences.theme = option.value"
+                      >
+                        <UIcon
+                          v-if="preferences.theme === option.value"
+                          name="lucide:check"
+                          class="w-4 h-4"
+                          :style="{ color: option.swatchText }"
+                        />
+                      </button>
+                    </div>
+                  </UFormField>
+                </div>
+              </template>
+            </UPopover>
             <UButton
               :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
               prefetch
@@ -131,12 +240,12 @@
 
     <!-- Main Content -->
     <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <UCard v-if="post" class="shadow-lg">
+      <UCard v-if="post" class="shadow-lg bg-(--a11y-card-bg)">
         <!-- Post Header -->
         <template #header>
           <div class="space-y-4">
             <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div class="flex items-center gap-2 text-sm text-(--a11y-muted)">
                 <UBadge color="neutral" variant="subtle">
                   Chapter {{ currentIndex + 1 }}
                 </UBadge>
@@ -157,24 +266,35 @@
                 @click="refreshPost"
               />
             </div>
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">
+            <h1 class="text-4xl font-bold text-(--a11y-text)" :class="fontFamilyClass">
               {{ post.title }}
             </h1>
-            <div v-if="(post as any).author" class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <UIcon name="lucide:circle-user-round" class="w-5 h-5" />
-              <span>{{ (post as any).author }}</span>
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-(--a11y-muted)" :class="fontFamilyClass">
+              <template v-if="(post as any).author">
+                <div class="flex items-center gap-2">
+                  <UIcon name="lucide:circle-user-round" class="w-5 h-5" />
+                  <span>{{ (post as any).author }}</span>
+                </div>
+                <span aria-hidden="true">·</span>
+              </template>
+              <span class="text-sm">{{ wordCountLabel }}</span>
             </div>
           </div>
         </template>
 
         <!-- Post Content -->
-        <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg text-base" ref="readerRef">
+        <div
+          class="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-primary prose-img:rounded-lg"
+          :class="[fontFamilyClass, proseInvertClass]"
+          :style="proseStyle"
+          ref="readerRef"
+        >
           <MDCRenderer v-if="computedBody !== null" :body="computedBody" />
         </div>
 
         <!-- Post Footer with Navigation -->
         <template #footer>
-          <div class="flex items-center justify-between gap-2 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex items-center justify-between gap-2 pt-4 sm:pt-6">
             <UButton
               :to="previousPost ? `/collections/${collectionId}/posts/${previousPost.postId}` : '#'"
               variant="outline"
@@ -200,7 +320,7 @@
               }"
             >
               <div class="flex flex-col items-start">
-                <span class="text-xs text-gray-500 dark:text-gray-400">previous</span>
+                <span class="text-xs text-(--a11y-muted)">previous</span>
                 <span class="font-medium truncate max-w-50">{{ previousPost?.title }}</span>
               </div>
             </UButton>
@@ -230,7 +350,7 @@
               }"
             >
               <div class="flex flex-col items-end">
-                <span class="text-xs text-gray-500 dark:text-gray-400">next</span>
+                <span class="text-xs text-(--a11y-muted)">next</span>
                 <span class="font-medium truncate max-w-50">{{ nextPost?.title }}</span>
               </div>
             </UButton>
@@ -259,6 +379,33 @@ const route = useRoute();
 const collectionId = route.params.id as string;
 const postId = route.params.postId as string;
 
+const {
+  preferences,
+  themeStyle,
+  fontFamilyClass,
+  proseStyle,
+  adjustFontScale,
+  resetPreferences,
+  fontScaleStep,
+  fontScaleMin,
+  fontScaleMax,
+} = useReadingPreferences();
+
+const isWideLetterSpacing = computed({
+  get: () => preferences.value.letterSpacing === 'wide',
+  set: (value: boolean) => {
+    preferences.value.letterSpacing = value ? 'wide' : 'normal';
+  },
+});
+
+// Typography plugin's dark-mode palette is meant to follow the OS via the
+// `.dark` html class; once the reader picks an explicit theme, invert (or not)
+// based on that choice instead so e.g. Sepia never renders white-on-cream text.
+const proseInvertClass = computed(() => {
+  if (preferences.value.theme === 'system') return 'dark:prose-invert';
+  return preferences.value.theme === 'dark' || preferences.value.theme === 'high-contrast' ? 'prose-invert' : '';
+});
+
 interface PostMetadata {
   title: string;
   postId: string;
@@ -282,6 +429,26 @@ const { data: allPosts } = await useFetch<any[]>(`/api/collections/${collectionI
 const computedBody = computed(() => {
   if (!post.value) return null;
   return toHast(post.value.body) as MDCRoot;
+});
+
+function collectHastText(node: any, out: string[]) {
+  if (!node) return;
+  if (node.type === 'text' && typeof node.value === 'string') {
+    out.push(node.value);
+  }
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) collectHastText(child, out);
+  }
+}
+
+const wordCountLabel = computed(() => {
+  if (!computedBody.value) return '';
+  const textChunks: string[] = [];
+  collectHastText(computedBody.value, textChunks);
+  const words = textChunks.join(' ').trim().split(/\s+/).filter(Boolean).length;
+  if (words === 0) return '';
+  const minutes = Math.max(1, Math.round(words / 220));
+  return `${words.toLocaleString()} words · ~${minutes} min read`;
 });
 
 // Use the posts list position exactly as returned by the API — chapter
