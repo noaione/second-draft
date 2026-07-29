@@ -26,6 +26,12 @@ interface CachedCounter {
 }
 
 const cachedCounter = useLocalStorage<CachedCounter[]>('cached-counters', []);
+const authorOpenState = useLocalStorage<Record<string, boolean>>('collections-open-authors', {});
+
+const isAuthorOpen = (author: string) => authorOpenState.value[author] ?? true;
+const setAuthorOpen = (author: string, value: boolean) => {
+  authorOpenState.value[author] = value;
+};
 
 // Get all collections
 const firstLoad = ref(true);
@@ -183,8 +189,9 @@ const logout = async () => {
             v-for="group in collectionsByAuthor"
             :key="group.author"
             as="section"
-            default-open
+            :open="isAuthorOpen(group.author)"
             :unmount-on-hide="false"
+            @update:open="(value) => setAuthorOpen(group.author, value)"
           >
             <template #default="{ open }">
               <button
