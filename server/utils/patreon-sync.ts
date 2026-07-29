@@ -139,7 +139,7 @@ async function syncCollection(
     mode: 'patreon',
   };
 
-  await saveCollectionMetadata(collectionId, metadata);
+  await saveCollectionMetadata(collectionId, metadata, { sortByPostId: true });
 
   const isNewSeries = downloadedPosts.size === 0;
 
@@ -207,7 +207,7 @@ export async function syncSinglePatreonPost(rootDir: string, postId: string, col
     mode: 'patreon',
   };
 
-  await saveCollectionMetadata(collectionId, collectionMeta);
+  await saveCollectionMetadata(collectionId, collectionMeta, { sortByPostId: true });
 }
 
 /**
@@ -290,7 +290,7 @@ export async function syncPostsByIds(
     mode: 'patreon',
   };
 
-  await saveCollectionMetadata(collectionId, collectionMeta);
+  await saveCollectionMetadata(collectionId, collectionMeta, { sortByPostId: true });
 
   const isNewSeries = downloadedBefore.size === 0;
 

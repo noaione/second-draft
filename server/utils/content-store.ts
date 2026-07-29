@@ -14,12 +14,25 @@ export async function ensureDir(dirPath: string) {
   }
 }
 
+export interface SaveCollectionMetadataOptions {
+  /**
+   * Re-sort the merged posts list by `postId` (string compare) after
+   * merging. Off by default — the caller-provided order is trusted as-is
+   * (see below). Patreon sync opts into this because some creators' post
+   * order/timestamps from the API are unreliable; Wattpad sync leaves it
+   * off since chapter IDs don't necessarily match reading order (authors
+   * can reorder their table of contents after publishing).
+   */
+  sortByPostId?: boolean;
+}
+
 /**
  * Save collection metadata
  */
 export async function saveCollectionMetadata(
   collectionId: string,
-  metadata: CollectionMetadata
+  metadata: CollectionMetadata,
+  options: SaveCollectionMetadataOptions = {}
 ): Promise<void> {
   const collectionDir = join(process.cwd(), 'content', collectionId);
   await ensureDir(collectionDir);
@@ -36,14 +49,15 @@ export async function saveCollectionMetadata(
   // source API returned on this run — for a full collection sync that's
   // the complete, authoritative list, so it always wins outright. Any
   // previously known posts missing from it (e.g. a partial backfill) are
-  // appended after, keeping their prior relative order. Never re-sort by
-  // postId here — chapter IDs don't necessarily match reading order
-  // (Wattpad authors can reorder their table of contents after publishing).
+  // appended after, keeping their prior relative order.
   const newPosts = metadata.posts ?? [];
   const newIds = new Set(newPosts.map((post) => post.postId));
   const leftoverOld = oldPosts.filter((post) => !newIds.has(post.postId));
 
   metadata.posts = [...newPosts, ...leftoverOld];
+  if (options.sortByPostId) {
+    metadata.posts.sort((a, b) => a.postId.localeCompare(b.postId));
+  }
   metadata.postCount = metadata.posts.length;
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }
