@@ -101,7 +101,7 @@ const THEME_VARS: Record<Exclude<ReadingTheme, 'system'>, Record<string, string>
 };
 
 export function useReadingPreferences() {
-  const preferences = useLocalStorage<ReadingPreferences>('reading-preferences', { ...DEFAULT_PREFERENCES }, { mergeDefaults: true });
+  const preferences = useLocalStorage<ReadingPreferences>('reading-preferences', { ...DEFAULT_PREFERENCES }, { mergeDefaults: true, initOnMounted: true });
 
   const colorMode = useColorMode();
   watch(
