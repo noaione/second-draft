@@ -373,20 +373,14 @@
 import type { MDCRoot } from '@nuxtjs/mdc';
 import type { MinimarkTree } from 'minimark';
 import { toHast } from 'minimark/hast';
-import { useScroll } from '@vueuse/core';
-
-interface ReadingState {
-  id: string;
-  cid: string;
-}
 
 const readerRef = useTemplateRef('readerRef');
 const { y } = useWindowScroll();
-const readData = useLocalStorage<ReadingState[]>('finished-reading', []);
 const route = useRoute();
 const collectionId = route.params.id as string;
 const postId = route.params.postId as string;
 
+const readData = useLocalStorage<string[]>(`finished-reading:${collectionId}`, []);
 const {
   preferences,
   themeStyle,
@@ -517,12 +511,8 @@ const formatDate = (dateString: string) => {
 };
 
 function addToFinishedReading() {
-  const existing = readData.value.find(r => r.id === post.value!.postId);
-  if (existing) return;
-  readData.value.push({
-    id: post.value!.postId,
-    cid: post.value!.collectionId,
-  });
+  if (readData.value.includes(post.value!.postId)) return;
+  readData.value.push(post.value!.postId);
 }
 
 const stop = watch(y, () => {

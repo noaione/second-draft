@@ -14,6 +14,7 @@ interface PostMetadata {
   author: string;
   collectionName: string;
   collectionId: string;
+  isRead?: boolean;
 }
 
 interface CollectionMetadata {
@@ -50,8 +51,22 @@ onMounted(async () => {
       $fetch<PostMetadata[]>(`/api/collections/${collectionId}/posts`),
     ]);
 
+    const readDataRaw = localStorage.getItem(`finished-reading:${collectionData.id}`);
+    let remappedPosts = postsData;
+    if (readDataRaw) {
+      try {
+        const parsedRead = JSON.parse(readDataRaw);
+        remappedPosts = remappedPosts.map((pst) => ({
+          ...pst,
+          isRead: parsedRead.includes(pst.postId)
+        }));
+      } catch {
+        // ignore
+      }
+    }
+
     collection.value = collectionData;
-    posts.value = postsData;
+    posts.value = remappedPosts;
 
     useSeoMeta({
       title: collectionData.name,
@@ -89,13 +104,14 @@ const columns: TableColumn<PostMetadata>[] = [
     header: 'title',
     cell: ({ row }) => {
       // Link to post
+      const isRead = Boolean(row.original.isRead);
       const postId = row.original.postId;
       const url = `/collections/${collectionId}/posts/${postId}`;
       return h(
         NuxtLink,
         {
           to: url,
-          class: 'text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200 font-medium',
+          class: isRead ? 'text-gray-400 dark:text-gray-500 hover:text-rose-600 dark:hover:text-rose-300 font-medium' : 'text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200 font-medium',
         },
         row.getValue('title')
       );
@@ -120,12 +136,13 @@ const columns: TableColumn<PostMetadata>[] = [
     cell: ({ row }) => {
       // Link to post
       const postId = row.original.postId;
+      const isRead = Boolean(row.original.isRead);
       const url = `/collections/${collectionId}/posts/${postId}`;
       return h(
         NuxtLink,
         {
           to: url,
-          class: 'text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200 font-medium'
+          class: isRead ? 'text-gray-400 dark:text-gray-500 hover:text-rose-600 dark:hover:text-rose-300 font-medium' : 'text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200 font-medium',
         },
         'read'
       );
@@ -210,6 +227,7 @@ watch(posts, () => {
 
 // Set sorted posts when posts updated
 watch([posts, search], ([newPosts, searchData]) => {
+  // get local storage of 
   let filtered = toRaw(newPosts);
 
   // Filter by search
