@@ -30,12 +30,26 @@ const turndownService = new TurndownService({
   codeBlockStyle: 'fenced',
 });
 
-// Wattpad chapters carry inline `style="..."` (color, alignment, font-size)
-// that plain Markdown can't express. Re-wrap any element that has a style
-// attribute as raw HTML instead of losing it to turndown's default plain-
-// text handling — @nuxtjs/mdc passes raw HTML in Markdown through untouched.
-// `node` is a turndown/domino DOM-like element, not a browser DOM node — the
-// server tsconfig has no `dom` lib, so `getAttribute`/`nodeName` are typed as `any`.
+/**
+ * Wattpad chapters carry inline `style="..."` (color, alignment, font-size)
+ * that plain Markdown can't express. We also can't use pure HTML as that would
+ * break the nuxt/mdc integration.
+ * 
+ * Instead, we use custom syntax/format to preserve the styling.
+ * 
+ * For example:
+ * ```html
+ * <p style="color: red; text-align: center;">Hello</p>
+ * ```
+ * becomes:
+ * ```markdown
+ * ::styled-html{tag="p" style="color: red; text-align: center;"}
+ * Hello
+ * ::
+ * ```
+ * 
+ * See `StyledHtml.global.vue` for the component that renders this syntax.
+ */
 turndownService.addRule('styledInline', {
   filter: (node: any) => Boolean(node.getAttribute && node.getAttribute('style')),
   replacement: (content: string, node: any) => {
