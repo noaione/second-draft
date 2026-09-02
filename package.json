@@ -29,7 +29,7 @@
     "mdast-util-to-markdown": "2.1.2",
     "minimark": "1.0.0",
     "nuxt": "^4.5.1",
-    "sanitize-html": "2.17.6",
+    "sanitize-html": "2.17.7",
     "sqlite3": "6.0.1",
     "tailwindcss": "4.3.3",
     "turndown": "7.2.4",
