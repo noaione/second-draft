@@ -6,10 +6,10 @@
  * chapter (e.g. Patreon collections that are incomplete or have gaps).
  *
  * Usage:
- *   bun run sync:posts <collectionId> <postId1> [postId2] [postId3] ...
+ *   pnpm run sync:posts <collectionId> <postId1> [postId2] [postId3] ...
  *
  * Example:
- *   bun run sync:posts 1848812 123456789 987654321
+ *   pnpm run sync:posts 1848812 123456789 987654321
  */
 
 import { syncPostsByIds, syncPatreon } from '../server/utils/patreon-sync';
@@ -21,14 +21,14 @@ const args = process.argv.slice(2);
 
 function printUsage() {
   console.log(`
-Usage: bun run sync:posts <collectionId> <postId1> [postId2] [postId3] ...
+Usage: pnpm run sync:posts <collectionId> <postId1> [postId2] [postId3] ...
 
 Arguments:
   collectionId    The collection ID from config.json (e.g. "1848812")
   postId1...      One or more Patreon post IDs to download
 
 If no post IDs are provided, falls back to a full sync of all collections
-(equivalent to running "bun run sync:patreon").
+(equivalent to running "pnpm run sync:patreon").
 `);
 }
 

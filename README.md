@@ -6,10 +6,12 @@ mainly created since I hate using patreon to navigate WN content
 
 ## installation
 
+Requires Node.js 22 and pnpm 12.14.0.
+
 ```bash
-bun install --frozen-lockfile
-bun run build
-bun run .output/server/index.mjs
+pnpm install --frozen-lockfile
+pnpm build
+node .output/server/index.mjs
 ```
 
 ## configuring and fetching content
@@ -29,7 +31,7 @@ basically:
 
 after that run the following
 ```bash
-bun run sync:patreon
+pnpm run sync:patreon
 ```
 
 which would start fetching the content from patreon (and wattpad), the posts will be stored to `./content` folder.
@@ -77,10 +79,10 @@ to migrate images in content that was synced before enabling S3:
 
 ```bash
 # all collections
-bun run backfill:images
+pnpm run backfill:images
 
 # one collection
-bun run backfill:images <collectionId>
+pnpm run backfill:images <collectionId>
 ```
 
 ## license

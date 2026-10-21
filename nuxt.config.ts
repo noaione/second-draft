@@ -100,7 +100,7 @@ export default defineNuxtConfig({
     rootDir,
   },
   nitro: {
-    preset: 'bun',
+    preset: 'node-server',
     experimental: {
       tasks: true,
     },

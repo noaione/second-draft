@@ -4,7 +4,7 @@
  * instead of their original, possibly-expiring remote URLs.
  *
  * Usage:
- *   bun run backfill:images [collectionId]
+ *   pnpm run backfill:images [collectionId]
  *
  * If no collectionId is given, every collection under content/ is processed.
  * Safe to re-run: rewriteMarkdownImages skips URLs that already point at

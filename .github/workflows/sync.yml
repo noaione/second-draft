@@ -13,14 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
         with:
-          bun-version: latest
+          version: 12.14.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
 
       - name: Clone target repo
         run: |
@@ -33,10 +39,10 @@ jobs:
           printf '%s' "$SYNC_CONFIG_B64" | base64 --decode > config.json
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
       - name: Sync content
-        run: bun run sync:patreon
+        run: pnpm run sync:patreon
 
       - name: Push content to target repo
         run: |

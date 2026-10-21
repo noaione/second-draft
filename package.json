@@ -2,49 +2,51 @@
   "name": "second-draft",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "sync:patreon": "bun run ./scripts/sync-data.ts",
-    "sync:posts": "bun run ./scripts/sync-posts.ts",
-    "backfill:images": "bun run ./scripts/backfill-images.ts",
-    "wattpad:discover": "bun run ./scripts/wattpad-discover.ts"
+    "sync:patreon": "tsx ./scripts/sync-data.ts",
+    "sync:posts": "tsx ./scripts/sync-posts.ts",
+    "backfill:images": "tsx ./scripts/backfill-images.ts",
+    "wattpad:discover": "tsx ./scripts/wattpad-discover.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1095.0",
-    "@iconify-json/lucide": "1.2.118",
-    "@nuxt/fonts": "0.14.0",
-    "@nuxt/ui": "4.10.0",
-    "@nuxtjs/mdc": "0.22.2",
+    "@aws-sdk/client-s3": "^3.1155.0",
+    "@iconify-json/lucide": "1.2.147",
+    "@nuxt/fonts": "1.0.1",
+    "@nuxt/ui": "4.12.0",
+    "@nuxtjs/mdc": "0.23.2",
     "@tailwindcss/typography": "0.5.20",
     "@types/mdast": "4.0.4",
-    "@vueuse/nuxt": "14.3.0",
+    "@vueuse/nuxt": "15.0.0",
     "bcrypt": "6.0.0",
-    "db0": "0.3.4",
-    "iron-session": "8.0.4",
-    "mdast-util-from-markdown": "^2.0.3",
+    "db0": "0.4.1",
+    "iron-session": "9.0.1",
+    "mdast-util-from-markdown": "^2.1.0",
     "mdast-util-gfm": "3.1.0",
-    "mdast-util-to-markdown": "2.1.2",
+    "mdast-util-to-markdown": "2.2.0",
     "minimark": "1.0.0",
-    "nuxt": "^4.5.1",
-    "sanitize-html": "2.17.6",
+    "nuxt": "^4.6.2",
+    "sanitize-html": "2.18.1",
     "sqlite3": "6.0.1",
     "tailwindcss": "4.3.3",
     "turndown": "7.2.4",
-    "typescript": "5.9.3",
+    "typescript": "6.0.3",
     "unist-util-visit": "5.1.0",
-    "vue": "3.5.40",
-    "zod": "4.4.3"
+    "vue": "3.5.44",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/bcrypt": "6.0.0",
-    "@types/sanitize-html": "2.16.1",
-    "@types/turndown": "5.0.6"
+    "@types/sanitize-html": "2.16.2",
+    "@types/turndown": "5.0.6",
+    "tsx": "^4.20.6"
   },
   "overrides": {
-    "@unhead/vue": "3.2.3",
-    "unhead": "3.2.3"
+    "@unhead/vue": "3.4.3",
+    "unhead": "3.4.3"
   }
 }

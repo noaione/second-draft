@@ -8,7 +8,7 @@
  * completion flag — mark them complete manually once reviewed.
  *
  * Usage:
- *   bun run wattpad:discover
+ *   pnpm run wattpad:discover
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
