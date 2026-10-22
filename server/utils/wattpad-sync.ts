@@ -34,7 +34,7 @@ function wattpadToMeta(
   author: string,
 ): PostMetadata {
   return {
-    title: part.title || 'Untitled Chapter',
+    title: part.title?.trim() || 'Untitled Chapter',
     postId: String(part.id),
     publishedAt: part.createDate ?? new Date().toISOString(),
     author,
