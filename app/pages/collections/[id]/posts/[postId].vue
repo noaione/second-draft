@@ -447,12 +447,35 @@ const computedBody = computed(() => {
   } satisfies MarkdownDocument;
 });
 
+function collectComarkText(node: ComarkNode, out: string[]) {
+  if (typeof node === 'string') {
+    out.push(node);
+    return;
+  }
+
+  // Comark stores elements as [tag, props, ...children] and comments as
+  // [null, props, text]. Only element children are visible rendered text.
+  if (node[0] === null) return;
+
+  const children = node.slice(2) as ComarkNode[];
+  for (const child of children) {
+    collectComarkText(child, out);
+  }
+}
+
 const wordCountLabel = computed(() => {
-  return 'TODO';
-  // const words = textChunks.join(' ').trim().split(/\s+/).filter(Boolean).length;
-  // if (words === 0) return '';
-  // const minutes = Math.max(1, Math.round(words / wpmRate.value));
-  // return `${words.toLocaleString()} words · ~${minutes} min read`;
+  if (!post.value?.body) return '';
+
+  const textChunks: string[] = [];
+  for (const node of post.value.body) {
+    collectComarkText(node, textChunks);
+  }
+
+  const words = textChunks.join(' ').trim().split(/\s+/).filter(Boolean).length;
+  if (words === 0) return '';
+
+  const minutes = Math.max(1, Math.round(words / wpmRate.value));
+  return `${words.toLocaleString()} words · ~${minutes} min read`;
 });
 
 // Use the posts list position exactly as returned by the API — chapter
