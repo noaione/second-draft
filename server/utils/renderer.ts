@@ -1,5 +1,9 @@
-import { createShikiHighlighter, parseMarkdown, rehypeHighlight } from "@nuxtjs/mdc/runtime";
-import materialThemePaleNight from 'shiki/themes/material-theme-palenight.mjs';
+import { createMarkdownParser, parseMarkdown } from 'comark';
+import shiki from 'comark/plugins/shiki';
+import security from 'comark/plugins/security';
+import emoji from 'comark/plugins/emoji';
+import materialThemePaleNight from '@shikijs/themes/material-theme-palenight';
+import materialThemeOcean from '@shikijs/themes/material-theme-ocean';
 
 import bash from '@shikijs/langs/bash';
 import html from '@shikijs/langs/html';
@@ -9,83 +13,57 @@ import yml from '@shikijs/langs/yml';
 import scss from '@shikijs/langs/scss';
 import ts from '@shikijs/langs/ts';
 import typescript from '@shikijs/langs/typescript';
-import { createOnigurumaEngine, type Highlighter } from "shiki";
+import json from '@shikijs/langs/json';
+import jsonc from '@shikijs/langs/jsonc';
+import json5 from '@shikijs/langs/json5';
 
-import { fromHast } from "minimark/hast";
 import type { PostMetadata } from "~~/types/config";
 import type { RenderedMarkdownResult } from "./db";
+import { CURRENT_MARKDOWN_FORMAT } from './versioning';
 
-type HighlightedNode = { type: 'element', properties?: Record<string, string | undefined> }
-
-let highlightPlugin: {
-  instance: unknown
-  key?: string
-  options?: {
-    theme?: Record<string, unknown>
-    highlighter: Highlighter,
-  }
-} | undefined;
-
-async function getHighlighter() {
-  const highlighter = createShikiHighlighter({
-    bundledLangs: {
-      'bash': bash,
-      'html': html,
-      'mdc': mdc,
-      'vue': vue,
-      'yml': yml,
-      'scss': scss,
-      'ts': ts,
-      'typescript': typescript,
+function getHighlighter() {
+  const highlighter = shiki({
+    languages: [
+      bash,
+      html,
+      mdc,
+      vue,
+      yml,
+      scss,
+      ts,
+      typescript,
+      json,
+      json5,
+      jsonc,
+    ],
+    themes: {
+      light: materialThemePaleNight,
+      dark: materialThemeOcean,
     },
-    bundledThemes: {
-      'material-theme-palenight': materialThemePaleNight,
-    },
-    engine: createOnigurumaEngine(import('shiki/wasm')),
   });
 
-  highlightPlugin = {
-    key: 'shiki-highlighter',
-    instance: rehypeHighlight,
-    options: {
-      // @ts-expect-error
-      highlighter: async (code, lang, theme, opts) => {
-        const result = await highlighter(code, lang, theme, opts)
-        return result
-      },
-      theme: {
-        'material-theme-palenight': materialThemePaleNight,
-      },
-    },
-  }
-
-  return highlightPlugin;  
+  return highlighter;  
 }
 
+const globalParser = createMarkdownParser({
+  plugins: [
+    getHighlighter(),
+    security({
+      blockedTags: ['script', 'iframe'],
+      allowedProtocols: ['https', 'mailto']
+    }),
+    emoji(),
+  ],
+});
+
 export async function renderMarkdownToHtml(markdown: string): Promise<Omit<RenderedMarkdownResult, 'id'>> {
-  const highlighterPlugin = highlightPlugin || await getHighlighter();
+  const document = await globalParser(markdown);
 
-  const parsed = await parseMarkdown(markdown, {
-    highlight: {
-      theme: 'material-theme-palenight',
-      // @ts-expect-error
-      highlighter: highlighterPlugin!.options!.highlighter,
-    },
-    remark: {
-      plugins: {
-        'remark-emoji': {},
-      },
-    },
-    rehype: {
-      plugins: {},
-    }
-  });
-
-  const comprssedBody = fromHast(parsed.body);
-  const dataContent = parsed.data as PostMetadata & { description: string };
+  const dataContent = document.frontmatter as PostMetadata & { description: string };
 
   return {
     ...dataContent,
-    body: comprssedBody,
+    body: document.nodes,
+    version: CURRENT_MARKDOWN_FORMAT,
   }
 }

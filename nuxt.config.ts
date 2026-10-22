@@ -2,7 +2,7 @@ const rootDir = import.meta.dirname;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxtjs/mdc', '@nuxt/fonts', '@nuxt/ui', "@vueuse/nuxt"],
+  modules: ['@comark/nuxt', '@nuxt/fonts', '@nuxt/ui', "@vueuse/nuxt"],
   css: ['~/assets/css/styles.css'],
   devtools: { enabled: true },
   compatibilityDate: '2027-07-23',
@@ -126,25 +126,5 @@ export default defineNuxtConfig({
       },
       sizeLimitKb: 20
     }
-  },
-  mdc: {
-    components: {
-      prose: true,
-      // map: {
-      //   a: 'A',
-      // }
-      map: {
-        a: 'A',
-        'styled-html': 'StyledHtml'
-      }
-    },
-    headings: {
-      anchorLinks: false,
-    }
-  },
-  components: {
-    global: true,
-    // @ts-expect-error ignore
-    path: './components/prose',
   },
 })

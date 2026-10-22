@@ -33,7 +33,7 @@ const turndownService = new TurndownService({
 /**
  * Wattpad chapters carry inline `style="..."` (color, alignment, font-size)
  * that plain Markdown can't express. We also can't use pure HTML as that would
- * break the nuxt/mdc integration.
+ * break the comark integration.
  * 
  * Instead, we use custom syntax/format to preserve the styling.
  * 

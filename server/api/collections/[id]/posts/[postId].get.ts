@@ -2,20 +2,11 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import type { H3Event } from 'h3';
 import { renderMarkdownToHtml } from '~~/server/utils/renderer';
-import { DatabaseThing, getDatabase, getStoredPosts, storeRenderedMarkdown, prepareDatabase } from '~~/server/utils/db';
-
-async function getFromCollectionStored(
-  db: DatabaseThing,
-  collectionId: string,
-  postId: string
-) {
-  const result = await getStoredPosts(db, collectionId, postId);
-  return result;
-}
+import { getDatabase, getStoredPosts, storeRenderedMarkdown, prepareDatabase } from '~~/server/utils/db';
+import { CURRENT_MARKDOWN_FORMAT } from '~~/server/utils/versioning';
 
 async function getFromCollectionPath(
   event: H3Event,
-  db: DatabaseThing,
   collectionId: string,
   postId: string
 ) {
@@ -31,15 +22,17 @@ async function getFromCollectionPath(
   try {
     const markdownContent = await fs.readFile(postPath, 'utf-8');
 
-    // Render with nuxt/content
-    const results = await renderMarkdownToHtml(markdownContent);
-    await storeRenderedMarkdown(db, results, `${collectionId}/posts/${postId}.md`);
-    return results;
-  } catch (error: any) {
+    const rendered = await renderMarkdownToHtml(markdownContent);
+    return {
+      ...rendered,
+      description: rendered.description ?? '',
+    };
+  } catch (error) {
     console.error(`Error rendering post file at ${postPath}:`, error);
-    if (error?.code === 'ENOENT') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
       return null;
     }
+    throw error;
   }
 }
 
@@ -64,18 +57,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = getDatabase(dbPath);
-  await prepareDatabase(db);
-
   try {
-    const singlePostStored = await getFromCollectionStored(db, collectionId, postId);
+    await prepareDatabase(db);
 
-    if (singlePostStored) {
-      return {
-        ...singlePostStored,
-      };
+    const storedPost = await getStoredPosts(db, collectionId, postId);
+    if (storedPost?.version === CURRENT_MARKDOWN_FORMAT) {
+      return storedPost;
     }
 
-    const singlePost = await getFromCollectionPath(event, db, collectionId, postId);
+    const singlePost = await getFromCollectionPath(event, collectionId, postId);
 
     if (!singlePost) {
       throw createError({
@@ -84,12 +74,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    const relativePath = `${collectionId}/posts/${postId}.md`;
+    await storeRenderedMarkdown(db, singlePost, relativePath);
+
     return {
       ...singlePost,
+      id: `content/${relativePath}`,
     };
-  } catch (error: any) {
-    console.error('Error fetching post:', error);
-    // Return empty array if no posts found
-    return [];
+  } finally {
+    await db.dispose();
   }
 });

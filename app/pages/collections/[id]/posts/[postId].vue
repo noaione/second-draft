@@ -297,7 +297,7 @@
           :style="proseStyle"
           ref="readerRef"
         >
-          <MDCRenderer v-if="computedBody !== null" :body="computedBody" />
+          <MarkdownDocument v-if="computedBody !== null" :value="computedBody" :components="{ 'styled-html': StyledHtml }" />
         </div>
 
         <!-- Post Footer with Navigation -->
@@ -370,9 +370,8 @@
 </template>
 
 <script setup lang="ts">
-import type { MDCRoot } from '@nuxtjs/mdc';
-import type { MinimarkTree } from 'minimark';
-import { toHast } from 'minimark/hast';
+import type { Node as ComarkNode, MarkdownDocument } from 'comark';
+import StyledHtml from '~/components/prose/StyledHtml.vue';
 
 const readerRef = useTemplateRef('readerRef');
 const { y } = useWindowScroll();
@@ -409,14 +408,17 @@ const proseInvertClass = computed(() => {
   return preferences.value.theme === 'dark' || preferences.value.theme === 'high-contrast' ? 'prose-invert' : '';
 });
 
-interface PostMetadata {
+interface PostFrontmatter {
   title: string;
   postId: string;
-  publishedAt: string;
+  publishedAt: string; // ISO 8601 date string
   author: string;
   collectionName: string;
   collectionId: string;
-  body: MinimarkTree,
+}
+
+interface PostMetadata extends PostFrontmatter {
+  body: ComarkNode[],
 }
 
 // Fetch current post
@@ -431,27 +433,26 @@ const { data: allPosts } = await useFetch<any[]>(`/api/collections/${collectionI
 
 const computedBody = computed(() => {
   if (!post.value) return null;
-  return toHast(post.value.body) as MDCRoot;
+  return {
+    nodes: post.value.body,
+    frontmatter: {
+      title: post.value.title,
+      postId: post.value.postId,
+      publishedAt: post.value.publishedAt,
+      author: post.value.author,
+      collectionName: post.value.collectionName,
+      collectionId: post.value.collectionId,
+    },
+    meta: {},
+  } satisfies MarkdownDocument;
 });
 
-function collectHastText(node: any, out: string[]) {
-  if (!node) return;
-  if (node.type === 'text' && typeof node.value === 'string') {
-    out.push(node.value);
-  }
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) collectHastText(child, out);
-  }
-}
-
 const wordCountLabel = computed(() => {
-  if (!computedBody.value) return '';
-  const textChunks: string[] = [];
-  collectHastText(computedBody.value, textChunks);
-  const words = textChunks.join(' ').trim().split(/\s+/).filter(Boolean).length;
-  if (words === 0) return '';
-  const minutes = Math.max(1, Math.round(words / wpmRate.value));
-  return `${words.toLocaleString()} words · ~${minutes} min read`;
+  return 'TODO';
+  // const words = textChunks.join(' ').trim().split(/\s+/).filter(Boolean).length;
+  // if (words === 0) return '';
+  // const minutes = Math.max(1, Math.round(words / wpmRate.value));
+  // return `${words.toLocaleString()} words · ~${minutes} min read`;
 });
 
 // Use the posts list position exactly as returned by the API — chapter
@@ -518,7 +519,7 @@ function addToFinishedReading() {
 const stop = watch(y, () => {
   const el = readerRef.value;
   if (!el) return;
-  if (computedBody.value === null) return; // ignore
+  if (!post.value?.body) return; // ignore
 
   const rect = el.getBoundingClientRect();
   const windowHeight = window.innerHeight;

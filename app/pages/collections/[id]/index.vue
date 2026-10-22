@@ -2,7 +2,6 @@
 import { h, resolveComponent } from 'vue'
 import { toRaw } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
-import type { Column } from '@tanstack/vue-table'
 
 const route = useRoute();
 const collectionId = route.params.id as string;
@@ -151,7 +150,11 @@ const columns: TableColumn<PostMetadata>[] = [
 ];
 
 
-function getHeader(column: Column<PostMetadata>, label: string) {
+function getHeader(column: {
+  getIsSorted: () => false | 'asc' | 'desc';
+  clearSorting: () => void;
+  toggleSorting: (desc?: boolean, isMulti?: boolean) => void;
+}, label: string) {
   const isSorted = column.getIsSorted()
 
   return h(

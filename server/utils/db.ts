@@ -1,7 +1,9 @@
+import type { Node } from "comark";
 import { createDatabase, type Primitive } from "db0";
 import nodeSqlite3Connector from "db0/connectors/sqlite3";
-import type { MinimarkTree } from "minimark";
 import type { PostMetadata } from "~~/types/config";
+import { SUPPORTED_MARKDOWN_VERSIONS } from "./versioning";
+import type { MarkdownFormatVersion } from "./versioning";
 
 const tableName = 'seconddraft_posts';
 
@@ -15,19 +17,29 @@ export function getDatabase(dbPath: string) {
 
 export type DatabaseThing = ReturnType<typeof getDatabase>;
 
-export type RenderedMarkdownResult = PostMetadata & { body: MinimarkTree, description: string, id: string };
+export type RenderedMarkdownResult = PostMetadata & { body: Node[], description: string, id: string; version: MarkdownFormatVersion };
+
+function coercePrimitiveVersion(version: string): MarkdownFormatVersion {
+  // Unknown version?
+  const trim = version.trim();
+  if (SUPPORTED_MARKDOWN_VERSIONS.includes(trim)) {
+    return trim as MarkdownFormatVersion;
+  }
+  return 'v1';
+}
 
 function coercePrimitive(metadata: { [key: string]: unknown }): RenderedMarkdownResult {
   return {
     id: String(metadata.id),
     title: String(metadata.title),
     author: String(metadata.author),
-    body: JSON.parse(String(metadata.body)) as MinimarkTree,
+    body: JSON.parse(String(metadata.body)),
     postId: String(metadata.postId),
     collectionId: String(metadata.collectionId),
     collectionName: String(metadata.collectionName),
-    description: String(metadata.description),
+    description: String(metadata.description ?? ''),
     publishedAt: String(metadata.publishedAt),
+    version: coercePrimitiveVersion(String(metadata.version)),
   }
 }
 
@@ -59,8 +71,16 @@ export async function deleteStoredPost(db: DatabaseThing, collectionId: string, 
 
 export async function storeRenderedMarkdown(db: DatabaseThing, result: Omit<RenderedMarkdownResult, 'id'>, path: string) {
   const stmt = db.prepare(`
-    INSERT INTO ${tableName} (id, title, author, body, postId, collectionId, collectionName, description, publishedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO ${tableName} (id, title, author, body, postId, collectionId, collectionName, description, publishedAt, version)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(collectionId, postId) DO UPDATE SET
+      title = excluded.title,
+      author = excluded.author,
+      body = excluded.body,
+      collectionName = excluded.collectionName,
+      description = excluded.description,
+      publishedAt = excluded.publishedAt,
+      version = excluded.version
   `);
 
   const values: Primitive[] = [
@@ -71,8 +91,9 @@ export async function storeRenderedMarkdown(db: DatabaseThing, result: Omit<Rend
     result.postId,
     result.collectionId,
     result.collectionName,
-    result.description,
+    result.description ?? '',
     result.publishedAt,
+    result.version,
   ];
 
   await stmt.run(...values);
@@ -99,4 +120,23 @@ export async function prepareDatabase(db: ReturnType<typeof getDatabase>) {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_collection_post
     ON {${tableName}}(collectionId, postId)
   `;
+
+  // SQLite does not support `ADD COLUMN IF NOT EXISTS`. Check first, then
+  // ignore only the duplicate-column race if two requests migrate together.
+  const versionColumn = await db.sql<{ rows?: { name?: unknown }[] }>`
+    SELECT name FROM pragma_table_info(${tableName}) WHERE name = 'version'
+  `;
+
+  if (!versionColumn.rows?.some((column) => column.name === 'version')) {
+    try {
+      await db.sql`
+        ALTER TABLE {${tableName}}
+        ADD COLUMN "version" TEXT NOT NULL DEFAULT 'v1'
+      `;
+    } catch (error) {
+      if (!(error instanceof Error) || !/duplicate column name/i.test(error.message)) {
+        throw error;
+      }
+    }
+  }
 }
