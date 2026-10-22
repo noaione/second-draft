@@ -24,9 +24,7 @@ const SESSION_OPTIONS = {
  * Get iron session from H3 event
  */
 export async function getSDraftSession(event: H3Event): Promise<IronSession<SessionData>> {
-  const req = toWebRequest(event);
-  const res = event.node.res;
-  return getIronSession<SessionData>(req, res, SESSION_OPTIONS);
+  return getIronSession<SessionData>(event.node.req, event.node.res, SESSION_OPTIONS);
 }
 
 /**
